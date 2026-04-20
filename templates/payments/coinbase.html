@@ -1,10 +1,558 @@
 {% extends 'base.html' %}
-{% i18n %}
-{% block title %}{% trans 'Coinbase' %}{% endblock title %}
+{% load i18n %}
 {% load static %}
 
+{% block title %}{% trans 'Coinbase Commerce' %} | {% trans 'SkyLearn LMS' %}{% endblock title %}
+
 {% block content %}
-<div class="container">
-	<center><h1>{% trans 'Coinbase' %}</h1></center>
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'payment_gateways' %}">{% trans 'Payment Gateways' %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans 'Coinbase Commerce' %}</li>
+    </ol>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fab fa-bitcoin"></i>
+        </div>
+        <div class="header-text">
+            <h1 class="header-title">{% trans 'Coinbase Commerce' %}</h1>
+            <p class="header-subtitle">{% trans 'Pay with cryptocurrency - Fast, secure, and decentralized' %}</p>
+        </div>
+    </div>
 </div>
+
+<!-- Messages -->
+{% include 'snippets/messages.html' %}
+
+<div class="payment-container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="payment-card">
+                <div class="payment-header">
+                    <div class="payment-icon">
+                        <i class="fab fa-bitcoin"></i>
+                    </div>
+                    <h2>{% trans 'Coinbase Commerce' %}</h2>
+                    <p>{% trans 'Complete your payment using cryptocurrency' %}</p>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="order-summary">
+                    <h3><i class="fas fa-receipt"></i> {% trans 'Order Summary' %}</h3>
+                    <div class="summary-row">
+                        <span>{% trans 'Course:' %}</span>
+                        <strong>{{ course.title|default:'Course Registration' }}</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>{% trans 'Amount (USD):' %}</span>
+                        <strong>${{ amount|default:'0.00' }}</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>{% trans 'Estimated Crypto:' %}</span>
+                        <strong id="estimatedCrypto">--</strong>
+                    </div>
+                </div>
+
+                <!-- Cryptocurrency Options -->
+                <div class="crypto-section">
+                    <h3><i class="fas fa-coins"></i> {% trans 'Select Cryptocurrency' %}</h3>
+                    <div class="crypto-grid">
+                        <label class="crypto-option">
+                            <input type="radio" name="crypto" value="bitcoin" data-symbol="BTC" data-rate="1" checked>
+                            <div class="crypto-card">
+                                <i class="fab fa-bitcoin"></i>
+                                <span class="crypto-name">Bitcoin (BTC)</span>
+                                <span class="crypto-network">{% trans 'Network:' %} Bitcoin</span>
+                            </div>
+                        </label>
+                        
+                        <label class="crypto-option">
+                            <input type="radio" name="crypto" value="ethereum" data-symbol="ETH" data-rate="0.015">
+                            <div class="crypto-card">
+                                <i class="fab fa-ethereum"></i>
+                                <span class="crypto-name">Ethereum (ETH)</span>
+                                <span class="crypto-network">{% trans 'Network:' %} ERC-20</span>
+                            </div>
+                        </label>
+                        
+                        <label class="crypto-option">
+                            <input type="radio" name="crypto" value="usdc" data-symbol="USDC" data-rate="1">
+                            <div class="crypto-card">
+                                <i class="fas fa-dollar-sign"></i>
+                                <span class="crypto-name">USD Coin (USDC)</span>
+                                <span class="crypto-network">{% trans 'Network:' %} Ethereum</span>
+                            </div>
+                        </label>
+                        
+                        <label class="crypto-option">
+                            <input type="radio" name="crypto" value="litecoin" data-symbol="LTC" data-rate="0.008">
+                            <div class="crypto-card">
+                                <i class="fas fa-chart-line"></i>
+                                <span class="crypto-name">Litecoin (LTC)</span>
+                                <span class="crypto-network">{% trans 'Network:' %} Litecoin</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- QR Code Section -->
+                <div class="qr-section" id="qrSection" style="display: none;">
+                    <div class="qr-code">
+                        <div class="qr-placeholder" id="qrPlaceholder">
+                            <i class="fas fa-qrcode"></i>
+                            <p>{% trans 'Scan to pay' %}</p>
+                        </div>
+                    </div>
+                    <div class="wallet-address">
+                        <label>{% trans 'Wallet Address:' %}</label>
+                        <div class="address-box">
+                            <code id="walletAddress">bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</code>
+                            <button class="copy-btn" onclick="copyAddress()">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Button -->
+                <form action="" method="POST" id="paymentForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="crypto_type" id="cryptoType" value="bitcoin">
+                    <input type="hidden" name="amount" value="{{ amount }}">
+                    
+                    <button type="submit" class="btn-pay" id="payBtn">
+                        <i class="fab fa-bitcoin"></i>
+                        <span>{% trans 'Pay with Cryptocurrency' %}</span>
+                    </button>
+                </form>
+
+                <!-- Security Notice -->
+                <div class="security-notice">
+                    <i class="fas fa-shield-alt"></i>
+                    <div>
+                        <strong>{% trans 'Secure Payment' %}</strong>
+                        <p>{% trans 'Your transaction is secured by blockchain technology. No personal information is shared.' %}</p>
+                    </div>
+                </div>
+
+                <!-- Supported Cryptocurrencies -->
+                <div class="supported-crypto">
+                    <p><i class="fas fa-check-circle"></i> {% trans 'Supported Cryptocurrencies:' %}</p>
+                    <div class="crypto-tags">
+                        <span class="crypto-tag"><i class="fab fa-bitcoin"></i> Bitcoin (BTC)</span>
+                        <span class="crypto-tag"><i class="fab fa-ethereum"></i> Ethereum (ETH)</span>
+                        <span class="crypto-tag"><i class="fas fa-dollar-sign"></i> USDC (ERC-20)</span>
+                        <span class="crypto-tag"><i class="fas fa-chart-line"></i> Litecoin (LTC)</span>
+                        <span class="crypto-tag"><i class="fab fa-bitcoin"></i> Bitcoin Cash (BCH)</span>
+                        <span class="crypto-tag"><i class="fab fa-ethereum"></i> DAI (ERC-20)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #0052ff 0%, #0052ff 50%, #1652f0 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.8);
+}
+
+/* Payment Container */
+.payment-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* Payment Card */
+.payment-card {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+}
+
+.payment-header {
+    background: linear-gradient(135deg, #f7931a 0%, #ffd93d 100%);
+    padding: 2rem;
+    text-align: center;
+    color: white;
+}
+
+.payment-icon {
+    width: 70px;
+    height: 70px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 2rem;
+}
+
+.payment-header h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.payment-header p {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+/* Order Summary */
+.order-summary, .crypto-section {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.order-summary h3, .crypto-section h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--gray-800);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+/* Crypto Grid */
+.crypto-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.crypto-option {
+    cursor: pointer;
+}
+
+.crypto-option input {
+    display: none;
+}
+
+.crypto-card {
+    padding: 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    transition: var(--transition-fast);
+    background: var(--card-bg, white);
+}
+
+.crypto-option input:checked + .crypto-card {
+    border-color: #0052ff;
+    background: rgba(0, 82, 255, 0.05);
+}
+
+.crypto-card i {
+    font-size: 1.5rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #f7931a;
+}
+
+.crypto-name {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--gray-800);
+}
+
+.crypto-network {
+    font-size: 0.6rem;
+    color: var(--gray-500);
+}
+
+/* QR Section */
+.qr-section {
+    padding: 1.5rem;
+    text-align: center;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.qr-code {
+    margin-bottom: 1rem;
+}
+
+.qr-placeholder {
+    width: 150px;
+    height: 150px;
+    background: white;
+    margin: 0 auto;
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--gray-200);
+}
+
+.qr-placeholder i {
+    font-size: 3rem;
+    color: var(--gray-400);
+    margin-bottom: 0.5rem;
+}
+
+.qr-placeholder p {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+}
+
+.wallet-address label {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.address-box {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-200);
+}
+
+.address-box code {
+    flex: 1;
+    font-size: 0.7rem;
+    word-break: break-all;
+    color: var(--gray-700);
+}
+
+.copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fast);
+}
+
+.copy-btn:hover {
+    background: var(--gray-100);
+}
+
+/* Payment Button */
+.btn-pay {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f7931a 0%, #ffd93d 100%);
+    color: white;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-pay:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+}
+
+.btn-pay:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Security Notice */
+.security-notice {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: var(--info-bg);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.security-notice i {
+    font-size: 1.5rem;
+    color: var(--info);
+}
+
+.security-notice strong {
+    font-size: 0.75rem;
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--gray-800);
+}
+
+.security-notice p {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    margin: 0;
+}
+
+/* Supported Crypto */
+.supported-crypto {
+    padding: 1rem 1.5rem;
+}
+
+.supported-crypto p {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    margin-bottom: 0.5rem;
+}
+
+.crypto-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.crypto-tag {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.5rem;
+    background: var(--gray-100);
+    border-radius: 20px;
+    color: var(--gray-600);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .crypto-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .payment-header {
+        padding: 1.5rem;
+    }
+}
+</style>
+
+<script>
+// Crypto rate conversion
+const amount = {{ amount|default:'100' }};
+const cryptoRates = {
+    bitcoin: { symbol: 'BTC', rate: 0.000025, network: 'Bitcoin' },
+    ethereum: { symbol: 'ETH', rate: 0.00038, network: 'ERC-20' },
+    usdc: { symbol: 'USDC', rate: 1, network: 'Ethereum' },
+    litecoin: { symbol: 'LTC', rate: 0.005, network: 'Litecoin' }
+};
+
+// Update estimated crypto amount
+function updateEstimate() {
+    const selected = document.querySelector('input[name="crypto"]:checked');
+    if (selected) {
+        const crypto = selected.value;
+        const rate = cryptoRates[crypto]?.rate || 0;
+        const estimated = (amount * rate).toFixed(6);
+        const symbol = cryptoRates[crypto]?.symbol || '';
+        document.getElementById('estimatedCrypto').textContent = `${estimated} ${symbol}`;
+        document.getElementById('cryptoType').value = crypto;
+        
+        // Show/hide QR section for crypto payments
+        const qrSection = document.getElementById('qrSection');
+        if (qrSection) {
+            qrSection.style.display = 'block';
+        }
+    }
+}
+
+// Copy wallet address
+function copyAddress() {
+    const address = document.getElementById('walletAddress').textContent;
+    navigator.clipboard.writeText(address).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+        }, 2000);
+    });
+}
+
+// Form submission with loading state
+document.getElementById('paymentForm').addEventListener('submit', function(e) {
+    const payBtn = document.getElementById('payBtn');
+    payBtn.disabled = true;
+    payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateEstimate();
+    document.querySelectorAll('input[name="crypto"]').forEach(radio => {
+        radio.addEventListener('change', updateEstimate);
+    });
+});
+</script>
+
 {% endblock content %}

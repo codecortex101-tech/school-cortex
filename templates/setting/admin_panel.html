@@ -1,76 +1,593 @@
 {% extends 'base.html' %}
 {% load i18n %}
-{% block title %}{{ title }} | {% trans 'Learning management system' %}{% endblock title %}
-{% load crispy_forms_tags %}
 {% load static %}
+
+{% block title %}{% trans 'Admin Panel' %} | {% trans 'SkyLearn LMS' %}{% endblock title %}
 
 {% block content %}
 
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
         <li class="breadcrumb-item active" aria-current="page">{% trans 'Admin Panel' %}</li>
     </ol>
-</nav>  
+</nav>
 
-<div class="title-1"><i class="fas fa-user-tie"></i>{% trans 'Admin Panel' %}</div>
-<br>
-<br>
-
-{% include 'snippets/messages.html' %}
-
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="border-bottom">
-                {% trans 'Manage' %}<a class="link" href="{% url 'lecturer_list' %}"> {% trans 'Lecturers' %} &raquo;</a>
-                <p class="text-muted">CRUD (Create, Retrieve, Update &amp; Delete) lecturers</p>
-            </div>
-
-            <div class="border-bottom mt-3">
-                {% trans 'Manage' %}<a class="link" href="{% url 'student_list' %}"> {% trans 'Students' %} &raquo;</a>
-            <p class="text-muted">CRUD (Create, Retrieve, Update &amp; Delete) {% trans 'students' %}</p>
-            </div>
-
-            <div class="border-bottom mt-3">
-                {% trans 'Manage' %}<a class="link" href="{% url 'session_list' %}"> {% trans 'Session' %} &raquo;</a>
-            <p class="text-muted">CRUD (Create, Retrieve, Update &amp; Delete) {% trans 'sessions' %}</p>
-            </div>
-
-            <div class="mt-3">
-                {% trans 'Manage' %}<a class="link" href="{% url 'semester_list' %}"> {% trans 'Semester' %} &raquo;</a>
-            <p class="text-muted">CRUD (Create, Retrieve, Update &amp; Delete) {% trans 'semesters' %}</p>
-            </div>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-user-tie"></i>
         </div>
-        <div class="col-md-6">
-            <div class="border-bottom">
-                {% trans 'Course Add' %} &amp; {% trans 'Drop' %}
-                <label class="switch switch-text switch-success switch-pill" style="float: right;">
-                <input type="checkbox" class="switch-input" checked="true">
-                <span data-on="On" data-off="Off" class="switch-label"></span>
-                <span class="switch-handle"></span>
-                </label>
-                <p class="text-muted">{% trans 'Switch' %} 
-                    <i class="info-text py-0 px-2 bg-success text-light">ON</i> or <i class="info-text py-0 px-2 bg-danger text-light">OFF</i>
-                </p>
-            </div>
-
-            <div class="border-bottom mt-3">
-                {% trans 'Manage' %}<a class="link" href="{% url 'programs' %}"> {% trans 'Programs' %} &amp; {% trans 'Courses' %} &raquo;</a>
-            <p class="text-muted">CRUD (Create, Retrieve, Update &amp; Delete) {% trans 'programs' %}</p>
-            </div>
-
-            <div class="border-bottom mt-3">
-                {% trans 'Manage' %}<a class="link" href="{% url 'course_allocation_view' %}"> {% trans 'Course Allocations' %} &raquo;</a>
-            <p class="text-muted">CRUD (Create, Retrieve, Update &amp; Delete) {% trans 'course allocations' %}</p>
-            </div>
-
-            <div class="mt-3">
-                {% trans 'Manage' %}<a class="link" href="{% url 'home' %}"> {% trans 'News' %} &amp; {% trans 'Events' %} &raquo;</a>
-            <p class="text-muted">CRUD (Create, Retrieve, Update &amp; Delete) {% trans 'News' %} &amp; {% trans 'Events' %}</p>
+        <div class="header-text">
+            <h1 class="header-title">{% trans 'Admin Panel' %}</h1>
+            <p class="header-subtitle">{% trans 'Manage your institution from one central dashboard' %}</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-badge">
+                <i class="fas fa-shield-alt"></i>
+                <span>{% trans 'Administrator Access' %}</span>
             </div>
         </div>
     </div>
 </div>
 
-{% endblock %}
+<!-- Messages -->
+{% include 'snippets/messages.html' %}
+
+<!-- Admin Panel Grid -->
+<div class="admin-panel-container">
+    <div class="row g-4">
+        
+        <!-- Left Column -->
+        <div class="col-lg-6">
+            <!-- User Management Section -->
+            <div class="admin-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h2 class="section-title">{% trans 'User Management' %}</h2>
+                    <span class="section-badge">{% trans 'CRUD Operations' %}</span>
+                </div>
+                <div class="section-body">
+                    <!-- Lecturers Card -->
+                    <div class="admin-card">
+                        <div class="card-icon lecturers">
+                            <i class="fas fa-chalkboard-user"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">
+                                <a href="{% url 'lecturer_list' %}">{% trans 'Lecturers' %}</a>
+                            </h3>
+                            <p class="card-description">{% trans 'Create, view, update, and delete lecturer accounts and information' %}</p>
+                            <div class="card-actions">
+                                <a href="{% url 'lecturer_list' %}" class="action-link">
+                                    {% trans 'Manage Lecturers' %} <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Students Card -->
+                    <div class="admin-card">
+                        <div class="card-icon students">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">
+                                <a href="{% url 'student_list' %}">{% trans 'Students' %}</a>
+                            </h3>
+                            <p class="card-description">{% trans 'Create, view, update, and delete student accounts and enrollment' %}</p>
+                            <div class="card-actions">
+                                <a href="{% url 'student_list' %}" class="action-link">
+                                    {% trans 'Manage Students' %} <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Academic Management Section -->
+            <div class="admin-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h2 class="section-title">{% trans 'Academic Management' %}</h2>
+                    <span class="section-badge">{% trans 'CRUD Operations' %}</span>
+                </div>
+                <div class="section-body">
+                    <!-- Programs & Courses Card -->
+                    <div class="admin-card">
+                        <div class="card-icon programs">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">
+                                <a href="{% url 'programs' %}">{% trans 'Programs & Courses' %}</a>
+                            </h3>
+                            <p class="card-description">{% trans 'Manage academic programs, courses, and their associations' %}</p>
+                            <div class="card-actions">
+                                <a href="{% url 'programs' %}" class="action-link">
+                                    {% trans 'Manage Programs' %} <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Course Allocations Card -->
+                    <div class="admin-card">
+                        <div class="card-icon allocations">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">
+                                <a href="{% url 'course_allocation_view' %}">{% trans 'Course Allocations' %}</a>
+                            </h3>
+                            <p class="card-description">{% trans 'Assign courses to lecturers for each academic session' %}</p>
+                            <div class="card-actions">
+                                <a href="{% url 'course_allocation_view' %}" class="action-link">
+                                    {% trans 'Manage Allocations' %} <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-6">
+            <!-- System Configuration Section -->
+            <div class="admin-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h2 class="section-title">{% trans 'System Configuration' %}</h2>
+                    <span class="section-badge">{% trans 'Settings' %}</span>
+                </div>
+                <div class="section-body">
+                    <!-- Sessions Card -->
+                    <div class="admin-card">
+                        <div class="card-icon sessions">
+                            <i class="fas fa-calendar-week"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">
+                                <a href="{% url 'session_list' %}">{% trans 'Academic Sessions' %}</a>
+                            </h3>
+                            <p class="card-description">{% trans 'Create, view, update, and delete academic sessions' %}</p>
+                            <div class="card-actions">
+                                <a href="{% url 'session_list' %}" class="action-link">
+                                    {% trans 'Manage Sessions' %} <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Semesters Card -->
+                    <div class="admin-card">
+                        <div class="card-icon semesters">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">
+                                <a href="{% url 'semester_list' %}">{% trans 'Semesters' %}</a>
+                            </h3>
+                            <p class="card-description">{% trans 'Create, view, update, and delete academic semesters' %}</p>
+                            <div class="card-actions">
+                                <a href="{% url 'semester_list' %}" class="action-link">
+                                    {% trans 'Manage Semesters' %} <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Management Section -->
+            <div class="admin-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <h2 class="section-title">{% trans 'Content Management' %}</h2>
+                    <span class="section-badge">{% trans 'CRUD Operations' %}</span>
+                </div>
+                <div class="section-body">
+                    <!-- News & Events Card -->
+                    <div class="admin-card">
+                        <div class="card-icon news">
+                            <i class="fas fa-newspaper"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">
+                                <a href="{% url 'home' %}">{% trans 'News & Events' %}</a>
+                            </h3>
+                            <p class="card-description">{% trans 'Create, view, update, and delete announcements and events' %}</p>
+                            <div class="card-actions">
+                                <a href="{% url 'home' %}" class="action-link">
+                                    {% trans 'Manage Content' %} <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Course Registration Toggle -->
+                    <div class="admin-card toggle-card">
+                        <div class="card-icon registration">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 class="card-title">{% trans 'Course Registration' %}</h3>
+                            <p class="card-description">{% trans 'Enable or disable student course registration' %}</p>
+                            <div class="toggle-wrapper">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="registrationToggle" checked="true">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="toggle-status" id="toggleStatus">{% trans 'Enabled' %}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.header-stats {
+    background: rgba(255,255,255,0.2);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+}
+
+.stat-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    color: white;
+}
+
+/* Admin Panel Container */
+.admin-panel-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Admin Section */
+.admin-section {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+[data-theme="dark"] .section-header {
+    background: var(--gray-800);
+}
+
+.section-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--primary-bg);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+}
+
+.section-title {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    flex: 1;
+}
+
+.section-badge {
+    font-size: 0.6rem;
+    padding: 0.25rem 0.5rem;
+    background: var(--gray-200);
+    border-radius: 20px;
+    color: var(--gray-600);
+}
+
+.section-body {
+    padding: 1.5rem;
+}
+
+/* Admin Card */
+.admin-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    margin-bottom: 1rem;
+    transition: var(--transition-fast);
+}
+
+.admin-card:last-child {
+    margin-bottom: 0;
+}
+
+.admin-card:hover {
+    background: var(--gray-100);
+    transform: translateX(4px);
+}
+
+[data-theme="dark"] .admin-card {
+    background: var(--gray-800);
+}
+
+[data-theme="dark"] .admin-card:hover {
+    background: var(--gray-700);
+}
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.card-icon.lecturers { background: var(--info-bg); color: var(--info); }
+.card-icon.students { background: var(--success-bg); color: var(--success); }
+.card-icon.programs { background: var(--primary-bg); color: var(--primary); }
+.card-icon.allocations { background: var(--warning-bg); color: var(--warning); }
+.card-icon.sessions { background: var(--info-bg); color: var(--info); }
+.card-icon.semesters { background: var(--success-bg); color: var(--success); }
+.card-icon.news { background: var(--warning-bg); color: var(--warning); }
+.card-icon.registration { background: var(--primary-bg); color: var(--primary); }
+
+.card-content {
+    flex: 1;
+}
+
+.card-title {
+    margin: 0 0 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.card-title a {
+    color: var(--gray-800);
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+.card-title a:hover {
+    color: var(--primary);
+}
+
+.card-description {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    margin: 0 0 0.5rem;
+    line-height: 1.4;
+}
+
+.card-actions {
+    margin-top: 0.5rem;
+}
+
+.action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    color: var(--primary);
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+.action-link:hover {
+    gap: 0.5rem;
+    color: var(--primary-dark);
+}
+
+/* Toggle Card */
+.toggle-card {
+    align-items: center;
+}
+
+.toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--success);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+}
+
+.toggle-status {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--success);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .admin-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .card-icon {
+        margin: 0 auto;
+    }
+    
+    .card-actions {
+        text-align: center;
+    }
+    
+    .toggle-wrapper {
+        justify-content: center;
+    }
+    
+    .section-header {
+        flex-wrap: wrap;
+    }
+    
+    .section-badge {
+        order: 3;
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .section-body {
+        padding: 1rem;
+    }
+    
+    .admin-card {
+        padding: 0.75rem;
+    }
+}
+</style>
+
+<script>
+// Toggle functionality for course registration
+document.getElementById('registrationToggle')?.addEventListener('change', function() {
+    const status = this.checked;
+    const statusText = document.getElementById('toggleStatus');
+    const isEnabled = status ? 'Enabled' : 'Disabled';
+    
+    if (statusText) {
+        statusText.textContent = isEnabled;
+        statusText.style.color = status ? 'var(--success)' : 'var(--error)';
+    }
+    
+    // Here you would make an AJAX call to save the setting
+    console.log('Registration toggle changed to:', status);
+    
+    // Example AJAX call (uncomment when backend is ready)
+    /*
+    fetch('/api/settings/registration-toggle/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value
+        },
+        body: JSON.stringify({ enabled: status })
+    });
+    */
+});
+</script>
+
+{% endblock content %}

@@ -1,31 +1,628 @@
 {% extends 'base.html' %}
 {% load i18n %}
-{% block title %}{{ video.title }} | {% trans 'Learning management system' %}{% endblock title %}
 {% load static %}
+
+{% block title %}{{ video.title }} | {% trans 'Video Tutorial' %} | {% trans 'SkyLearn LMS' %}{% endblock title %}
 
 {% block content %}
 
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
         <li class="breadcrumb-item"><a href="{% url 'programs' %}">{% trans 'Programs' %}</a></li>
         <li class="breadcrumb-item"><a href="{% url 'program_detail' video.course.program.id %}">{{ video.course.program }}</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'course_detail' video.course.slug %}">{{ video.course }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ video.title }}</li>
+        <li class="breadcrumb-item"><a href="{% url 'course_detail' video.course.slug %}">{{ video.course.title|truncatechars:30 }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ video.title|truncatechars:40 }}</li>
     </ol>
 </nav>
-    
-<p class="title-1">{{ video.title }}</p>
-<br><br>
 
-<div class="col-md-10 mx-auto d-block">
-    <div class=""><video src="{{ video.video.url }}" controls ></video></div>
-    <p><i class="fas fa-calendar"></i> {{ video.timestamp|timesince }} {% trans 'ago' %}</p>
-    {% if video.summary %}
-    <p class="text-orange text-center">{{ video.summary }}</p>
-    {% else %}
-    {% trans 'No video description set.' %}
-    {% endif %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-video"></i>
+        </div>
+        <div class="header-text">
+            <h1 class="header-title">{{ video.title }}</h1>
+            <p class="header-subtitle">{{ video.course.title }}</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-badge">
+                <i class="fas fa-clock"></i>
+                <span id="videoDuration">--:--</span>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Messages -->
+{% include 'snippets/messages.html' %}
+
+<div class="video-container">
+    <div class="row g-4">
+        <!-- Video Player Section -->
+        <div class="col-lg-8">
+            <div class="video-player-card">
+                <div class="video-wrapper">
+                    <video id="videoPlayer" class="video-js" controls preload="metadata">
+                        <source src="{{ video.video.url }}" type="video/mp4">
+                        <p class="vjs-no-js">
+                            {% trans 'To view this video please enable JavaScript, and consider upgrading to a web browser that' %}
+                            <a href="https://videojs.com/html5-video-support/" target="_blank">{% trans 'supports HTML5 video' %}</a>
+                        </p>
+                    </video>
+                </div>
+                
+                <!-- Video Info -->
+                <div class="video-info">
+                    <div class="info-header">
+                        <h2 class="video-title">{{ video.title }}</h2>
+                        <div class="video-meta">
+                            <span class="meta-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                {{ video.timestamp|date:"F d, Y" }}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-clock"></i>
+                                {{ video.timestamp|timesince }} {% trans 'ago' %}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-eye"></i>
+                                <span id="viewCount">0</span> {% trans 'views' %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    {% if video.summary %}
+                    <div class="video-description">
+                        <h3><i class="fas fa-align-left"></i> {% trans 'Description' %}</h3>
+                        <p>{{ video.summary|linebreaks }}</p>
+                    </div>
+                    {% else %}
+                    <div class="video-description empty">
+                        <i class="fas fa-info-circle"></i>
+                        <p>{% trans 'No description available for this video.' %}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Section -->
+        <div class="col-lg-4">
+            <!-- Course Info Card -->
+            <div class="sidebar-card">
+                <div class="card-header-custom">
+                    <i class="fas fa-info-circle"></i>
+                    <h3>{% trans 'Course Information' %}</h3>
+                </div>
+                <div class="card-body-custom">
+                    <div class="info-row">
+                        <span><i class="fas fa-book"></i> {% trans 'Course:' %}</span>
+                        <a href="{% url 'course_detail' video.course.slug %}">{{ video.course.title }}</a>
+                    </div>
+                    <div class="info-row">
+                        <span><i class="fas fa-code"></i> {% trans 'Course Code:' %}</span>
+                        <span>{{ video.course.code }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span><i class="fas fa-layer-group"></i> {% trans 'Program:' %}</span>
+                        <span>{{ video.course.program }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span><i class="fas fa-clock"></i> {% trans 'Credits:' %}</span>
+                        <span>{{ video.course.credit }} {% trans 'credits' %}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions Card -->
+            <div class="sidebar-card">
+                <div class="card-header-custom">
+                    <i class="fas fa-cog"></i>
+                    <h3>{% trans 'Actions' %}</h3>
+                </div>
+                <div class="card-body-custom">
+                    <a href="{{ video.video.url }}" class="action-btn download" download>
+                        <i class="fas fa-download"></i>
+                        <span>{% trans 'Download Video' %}</span>
+                    </a>
+                    <a href="{% url 'course_detail' video.course.slug %}" class="action-btn back">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>{% trans 'Back to Course' %}</span>
+                    </a>
+                    {% if request.user.is_superuser or request.user.is_lecturer %}
+                    <div class="divider"></div>
+                    <a href="{% url 'upload_video_edit' slug=video.course.slug video_slug=video.slug %}" class="action-btn edit">
+                        <i class="fas fa-edit"></i>
+                        <span>{% trans 'Edit Video' %}</span>
+                    </a>
+                    <a href="{% url 'upload_video_delete' slug=video.course.slug video_slug=video.slug %}" class="action-btn delete" onclick="return confirm('{% trans "Are you sure you want to delete this video?" %}')">
+                        <i class="fas fa-trash-alt"></i>
+                        <span>{% trans 'Delete Video' %}</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Related Videos (Optional) -->
+            {% if related_videos %}
+            <div class="sidebar-card">
+                <div class="card-header-custom">
+                    <i class="fas fa-list"></i>
+                    <h3>{% trans 'Related Videos' %}</h3>
+                </div>
+                <div class="card-body-custom related-list">
+                    {% for related in related_videos|slice:":5" %}
+                    <a href="{% url 'video_single' slug=video.course.slug video_slug=related.slug %}" class="related-item">
+                        <div class="related-thumb">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <div class="related-info">
+                            <span class="related-title">{{ related.title|truncatechars:40 }}</span>
+                            <span class="related-duration">{{ related.timestamp|timesince }} ago</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.header-stats {
+    background: rgba(255,255,255,0.2);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+}
+
+.stat-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: white;
+}
+
+/* Video Container */
+.video-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* Video Player Card */
+.video-player-card {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+}
+
+.video-wrapper {
+    background: #000;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+}
+
+.video-wrapper video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Custom Video Player Styles */
+.video-js {
+    width: 100%;
+    height: 100%;
+    background: #000;
+}
+
+.video-js .vjs-big-play-button {
+    background: rgba(79, 70, 229, 0.8);
+    border-radius: 50%;
+    width: 70px;
+    height: 70px;
+    line-height: 70px;
+    border: none;
+}
+
+.video-js .vjs-big-play-button:hover {
+    background: var(--primary);
+}
+
+/* Video Info */
+.video-info {
+    padding: 1.5rem;
+}
+
+.info-header {
+    margin-bottom: 1rem;
+}
+
+.video-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--gray-800);
+}
+
+.video-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Video Description */
+.video-description {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.video-description h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--gray-700);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.video-description p {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    line-height: 1.6;
+}
+
+.video-description.empty {
+    text-align: center;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+}
+
+.video-description.empty i {
+    font-size: 1.5rem;
+    color: var(--gray-400);
+    margin-bottom: 0.5rem;
+}
+
+/* Sidebar Cards */
+.sidebar-card {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.card-header-custom {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.25rem;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.card-header-custom i {
+    color: var(--primary);
+}
+
+.card-header-custom h3 {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.card-body-custom {
+    padding: 1.25rem;
+}
+
+/* Info Row */
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-row span:first-child {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.info-row span:last-child,
+.info-row a {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    text-decoration: none;
+}
+
+.info-row a:hover {
+    color: var(--primary);
+}
+
+/* Action Buttons */
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: var(--transition-fast);
+    margin-bottom: 0.5rem;
+}
+
+.action-btn:last-child {
+    margin-bottom: 0;
+}
+
+.action-btn.download {
+    background: var(--success);
+    color: white;
+}
+
+.action-btn.download:hover {
+    background: var(--success-dark);
+    transform: translateX(4px);
+}
+
+.action-btn.back {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.action-btn.back:hover {
+    background: var(--gray-300);
+    transform: translateX(4px);
+}
+
+.action-btn.edit {
+    background: var(--info);
+    color: white;
+}
+
+.action-btn.edit:hover {
+    background: var(--info-dark);
+    transform: translateX(4px);
+}
+
+.action-btn.delete {
+    background: var(--error-bg);
+    color: var(--error);
+}
+
+.action-btn.delete:hover {
+    background: var(--error);
+    color: white;
+    transform: translateX(4px);
+}
+
+.divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 0.75rem 0;
+}
+
+/* Related Videos */
+.related-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.related-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    transition: var(--transition-fast);
+    background: var(--gray-50);
+}
+
+.related-item:hover {
+    background: var(--gray-100);
+    transform: translateX(4px);
+}
+
+[data-theme="dark"] .related-item {
+    background: var(--gray-800);
+}
+
+[data-theme="dark"] .related-item:hover {
+    background: var(--gray-700);
+}
+
+.related-thumb {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.related-info {
+    flex: 1;
+}
+
+.related-title {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    margin-bottom: 0.25rem;
+}
+
+.related-duration {
+    font-size: 0.6rem;
+    color: var(--gray-500);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .video-container {
+        padding: 0;
+    }
+    
+    .video-info {
+        padding: 1rem;
+    }
+    
+    .video-title {
+        font-size: 1rem;
+    }
+    
+    .video-meta {
+        flex-wrap: wrap;
+    }
+    
+    .info-row {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .action-btn {
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+// Video player enhancement
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('videoPlayer');
+    const durationSpan = document.getElementById('videoDuration');
+    const viewCountSpan = document.getElementById('viewCount');
+    
+    // Get video duration when metadata loaded
+    if (video) {
+        video.addEventListener('loadedmetadata', function() {
+            const duration = video.duration;
+            const minutes = Math.floor(duration / 60);
+            const seconds = Math.floor(duration % 60);
+            durationSpan.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        });
+        
+        // Save view count (increment when video is played)
+        let viewRecorded = false;
+        video.addEventListener('play', function() {
+            if (!viewRecorded) {
+                viewRecorded = true;
+                // Send view count to server (AJAX)
+                fetch(`/api/video/{{ video.id }}/view/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    }
+                }).catch(err => console.log('View count not recorded'));
+            }
+        });
+        
+        // Set initial view count (from server)
+        if (viewCountSpan) {
+            viewCountSpan.textContent = '{{ video.view_count|default:"0" }}';
+        }
+        
+        // Remember playback position
+        const savedTime = localStorage.getItem(`video_time_{{ video.id }}`);
+        if (savedTime && !isNaN(parseInt(savedTime))) {
+            const time = parseInt(savedTime);
+            if (time > 5 && time < video.duration - 10) {
+                const resume = confirm('{% trans "Resume watching from where you left off?" %}');
+                if (resume) {
+                    video.currentTime = time;
+                }
+            }
+        }
+        
+        // Save playback position
+        video.addEventListener('timeupdate', function() {
+            if (video.currentTime > 5 && video.currentTime < video.duration - 10) {
+                localStorage.setItem(`video_time_{{ video.id }}`, Math.floor(video.currentTime));
+            }
+        });
+    }
+});
+</script>
 
 {% endblock content %}

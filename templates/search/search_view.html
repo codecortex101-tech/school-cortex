@@ -1,98 +1,655 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}{% trans 'Search result for' %} {{ query }} | {% trans 'Learning management system' %}{% endblock title %}
+{% load static %}
+
+{% block title %}{% trans 'Search Results' %} | {{ query }} | {% trans 'SkyLearn LMS' %}{% endblock title %}
 
 {% load class_name %}
 
 {% block content %}
 
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
         <li class="breadcrumb-item active" aria-current="page">{% trans 'Search' %}</li>
     </ol>
-</nav>  
+</nav>
 
-<div class="card p-3" style="box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.3); border-radius: 10px;">
-    <h5 class="text-muted m-0">{{ count }} {% trans 'result' %}{{ count|pluralize }} {% trans 'for' %} <b><em class="text-orange"> {{ query }}</em></b></h5>
-    <hr>
-    {% for object in object_list %}
-        {% with object|class_name as klass %}
-        {% if klass == "Program" %}
-            <div class="col-12 class-item">
-                <span class="bg-secondary text-light small px-2 rounded-pill">{% trans 'Program' %}</span>
-                <h5><a href="{{ object.get_absolute_url }}"><b>{{ object.title}}</b></a></h5>
-                <p>{{ object.summary }}</p>
-            </div><hr>
+<!-- Search Header -->
+<div class="search-header">
+    <div class="search-header-content">
+        <div class="search-icon">
+            <i class="fas fa-search"></i>
+        </div>
+        <div class="search-info">
+            <h1 class="search-title">
+                {% trans 'Search Results' %}
+                {% if query %}
+                <span class="search-query">"{{ query }}"</span>
+                {% endif %}
+            </h1>
+            <p class="search-stats">
+                {{ count }} {% trans 'result' %}{{ count|pluralize }} {% trans 'found' %}
+                {% if query %}{% trans 'for' %} <strong>"{{ query }}"</strong>{% endif %}
+            </p>
+        </div>
+    </div>
+</div>
 
-        {% elif klass == "Course" %}
-            <div class="col-12 class-item">
-                <span class="bg-secondary text-light small px-2 rounded-pill">{% trans 'Course' %}</span>
-                <p><b>{% trans 'Program of' %}</b> {{ object.program }}</p>
-                <h5><a href="{{ object.get_absolute_url }}"><b>{{ object }}</b></a></h5>
-                <p>{{ object.summary }}</p>
-            </div><hr>
-            
-        {% elif klass == "NewsAndEvents" %}
-            <div class="col-12 class-item">
-                <span class="bg-secondary text-light small px-2 rounded-pill">{% trans 'News And Events' %}</span>
-                <p><b>{% trans 'Date:' %} </b> {{ object.updated_date|timesince }} ago</p>
-                <h5><a href="{{ object.get_absolute_url }}"><b>{{ object.title }}</b></a></h5>
-                <p>{{ object.summary }}</p>
-            </div><hr>
+<!-- Results Container -->
+<div class="search-results-container">
+    {% if object_list %}
+        <div class="results-list">
+            {% for object in object_list %}
+                {% with object|class_name as klass %}
+                
+                <!-- Program Result -->
+                {% if klass == "Program" %}
+                <div class="result-card program-card">
+                    <div class="result-badge program-badge">
+                        <i class="fas fa-graduation-cap"></i> {% trans 'Program' %}
+                    </div>
+                    <div class="result-content">
+                        <h3 class="result-title">
+                            <a href="{{ object.get_absolute_url }}">{{ object.title }}</a>
+                        </h3>
+                        {% if object.summary %}
+                        <p class="result-summary">{{ object.summary|truncatechars:200 }}</p>
+                        {% endif %}
+                        <div class="result-meta">
+                            <span class="meta-item">
+                                <i class="fas fa-book-open"></i> 
+                                {{ object.course_set.count }} {% trans 'courses' %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="result-action">
+                        <a href="{{ object.get_absolute_url }}" class="btn-view">
+                            {% trans 'View Program' %} <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
 
-        {% elif klass == "Quiz" %}
-            <div class="col-12 class-item">
-                <span class="bg-secondary text-light small px-2 rounded-pill">{% trans 'Quiz' %}</span>
-                <p>{{ object.category }} {% trans 'quiz' %},  <b>{% trans 'Course:' %}</b> {{ object.course }}</p>
-                <h5><a href="{{ object.get_absolute_url }}"><b>{{ object.title }}</b></a></h5>
-                <p>{{ object.description }}</p>
-            </div><hr>
+                <!-- Course Result -->
+                {% if klass == "Course" %}
+                <div class="result-card course-card">
+                    <div class="result-badge course-badge">
+                        <i class="fas fa-book"></i> {% trans 'Course' %}
+                    </div>
+                    <div class="result-content">
+                        <div class="course-code">{{ object.code }}</div>
+                        <h3 class="result-title">
+                            <a href="{{ object.get_absolute_url }}">{{ object.title }}</a>
+                        </h3>
+                        <div class="course-meta">
+                            <span class="meta-item">
+                                <i class="fas fa-layer-group"></i> {{ object.program }}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-clock"></i> {{ object.credit }} {% trans 'credits' %}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-calendar"></i> {% trans 'Year' %} {{ object.year }}
+                            </span>
+                        </div>
+                        {% if object.summary %}
+                        <p class="result-summary">{{ object.summary|truncatechars:150 }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="result-action">
+                        <a href="{{ object.get_absolute_url }}" class="btn-view">
+                            {% trans 'View Course' %} <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
 
-        {% else %}
-            <div class="col-12 col-lg-8 offset-lg-4">
-                <span class="bg-secondary text-light small px-2 rounded-pill">{% trans 'Program' %}</span>
-                <a href="{{ object.get_absolute_url }}" class="class-item d-flex">{{ object }} | {{ object|class_name }}</a>
-            </div><hr>
-            <div class="col-12 class-item">
-                <h5><a href="{{ object.get_absolute_url }}">{{ object }} | <b>{{ object|class_name }}</b></a></h5>
-                <p>{{ object.description }}</p>
-            </div><hr>
-        {% endif %}
+                <!-- News & Events Result -->
+                {% if klass == "NewsAndEvents" %}
+                <div class="result-card news-card">
+                    <div class="result-badge news-badge">
+                        <i class="fas fa-newspaper"></i> {% trans 'News & Events' %}
+                    </div>
+                    <div class="result-content">
+                        <h3 class="result-title">
+                            <a href="{{ object.get_absolute_url }}">{{ object.title }}</a>
+                        </h3>
+                        <div class="news-meta">
+                            <span class="meta-item">
+                                <i class="far fa-calendar-alt"></i> {{ object.updated_date|timesince }} {% trans 'ago' %}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-tag"></i> {{ object.posted_as|default:'General' }}
+                            </span>
+                        </div>
+                        {% if object.summary %}
+                        <p class="result-summary">{{ object.summary|truncatechars:150 }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="result-action">
+                        <a href="{{ object.get_absolute_url }}" class="btn-view">
+                            {% trans 'Read More' %} <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
 
-        {% endwith %}
+                <!-- Quiz Result -->
+                {% if klass == "Quiz" %}
+                <div class="result-card quiz-card">
+                    <div class="result-badge quiz-badge">
+                        <i class="fas fa-puzzle-piece"></i> {% trans 'Quiz' %}
+                    </div>
+                    <div class="result-content">
+                        <h3 class="result-title">
+                            <a href="{{ object.get_absolute_url }}">{{ object.title }}</a>
+                        </h3>
+                        <div class="quiz-meta">
+                            <span class="meta-item">
+                                <i class="fas fa-book"></i> {{ object.course }}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-tag"></i> {{ object.category|default:'General' }}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-question-circle"></i> {{ object.get_questions.count }} {% trans 'questions' %}
+                            </span>
+                        </div>
+                        {% if object.description %}
+                        <p class="result-summary">{{ object.description|truncatechars:150 }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="result-action">
+                        <a href="{{ object.get_absolute_url }}" class="btn-view">
+                            {% trans 'Take Quiz' %} <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
 
-{% empty %}
-
-<div class="row">
-    <div class="col-12 col-md-6 mx-auto py-5">
-    <form method="GET" action=".">
-    
-        <div class="input-group form-group-no-border mx-auto" style="margin-bottom: 0px; font-size: 32px;">
-            <input type="text" name="q" data-toggle="popover" data-placement="bottom" 
-            data-content="Press enter to search" class="form-control cfe-nav" 
-            placeholder="Search..." value="{{ request.GET.q }}" data-original-title="" title="" 
-            autofocus="autofocus" required>
-            <button type="submit" class="btn btn-dark">
-                <i class="fa fa-search" aria-hidden="true"></i>
-            </button>
+                {% endwith %}
+            {% endfor %}
         </div>
 
-    </form>
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination-container">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-chevron-left"></i> {% trans 'Previous' %}
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">
+                            {% trans 'Next' %} <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
 
-    </div>
-    <div class="col-12 pl-5">
-    <h5>{% trans 'Search by:' %}</h5>
-    <ul class="pl-3">
-        <li>{% trans 'Program' %} <span class="text-orange">&gt;</span> {% trans 'Title or Description' %}</li>
-        <li>{% trans 'Course' %} <span class="text-orange">&gt;</span>{% trans 'Title, Code or Description' %}</li>
-        <li>{% trans 'News And Events' %} <span class="text-orange">&gt;</span> {% trans 'Title, Description or just by typing news or event' %}li>
-        <li>{% trans 'Quiz' %} <span class="text-orange">&gt;</span>{% trans 'Title, Description or Category(practice, assignment and exam)' %}</li>
-    </ul>
-    </div>
+    {% else %}
+        <!-- No Results -->
+        <div class="no-results">
+            <div class="no-results-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h2>{% trans 'No results found' %}</h2>
+            <p>{% trans "We couldn't find any matches for" %} <strong>"{{ query }}"</strong></p>
+            
+            <!-- Search Form -->
+            <form method="GET" action="." class="no-results-search">
+                <div class="search-input-wrapper">
+                    <input type="text" 
+                           name="q" 
+                           class="search-input-large" 
+                           placeholder="{% trans 'Try another search...' %}" 
+                           value="{{ request.GET.q }}"
+                           autofocus>
+                    <button type="submit" class="search-btn-large">
+                        <i class="fas fa-search"></i> {% trans 'Search' %}
+                    </button>
+                </div>
+            </form>
+
+            <!-- Search Tips -->
+            <div class="search-tips">
+                <h5><i class="fas fa-lightbulb"></i> {% trans 'Search Tips:' %}</h5>
+                <ul>
+                    <li><i class="fas fa-check"></i> {% trans 'Check your spelling' %}</li>
+                    <li><i class="fas fa-check"></i> {% trans 'Use more general terms' %}</li>
+                    <li><i class="fas fa-check"></i> {% trans 'Try different keywords' %}</li>
+                    <li><i class="fas fa-check"></i> {% trans 'Search by program name, course title, or quiz name' %}</li>
+                </ul>
+            </div>
+
+            <!-- Search Categories -->
+            <div class="search-categories">
+                <h5><i class="fas fa-tags"></i> {% trans 'You can search for:' %}</h5>
+                <div class="category-tags">
+                    <span class="category-tag"><i class="fas fa-graduation-cap"></i> {% trans 'Programs' %}</span>
+                    <span class="category-tag"><i class="fas fa-book"></i> {% trans 'Courses' %}</span>
+                    <span class="category-tag"><i class="fas fa-newspaper"></i> {% trans 'News & Events' %}</span>
+                    <span class="category-tag"><i class="fas fa-puzzle-piece"></i> {% trans 'Quizzes' %}</span>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 </div>
 
-{% endfor %}
-</div>
+<style>
+/* Search Header */
+.search-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.search-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.search-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.search-info {
+    flex: 1;
+}
+
+.search-title {
+    margin: 0 0 0.25rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+.search-query {
+    background: rgba(255,255,255,0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 1rem;
+    display: inline-block;
+}
+
+.search-stats {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.9);
+}
+
+/* Results Container */
+.search-results-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Result Card */
+.result-card {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    padding: 1.5rem;
+    transition: var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.result-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.result-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+.program-card::before { background: var(--primary); }
+.course-card::before { background: var(--success); }
+.news-card::before { background: var(--warning); }
+.quiz-card::before { background: var(--info); }
+
+/* Result Badge */
+.result-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.program-badge { background: var(--primary-bg); color: var(--primary); }
+.course-badge { background: var(--success-bg); color: var(--success); }
+.news-badge { background: var(--warning-bg); color: var(--warning); }
+.quiz-badge { background: var(--info-bg); color: var(--info); }
+
+/* Result Content */
+.result-content {
+    margin-bottom: 1rem;
+}
+
+.result-title {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.result-title a {
+    color: var(--gray-800);
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+.result-title a:hover {
+    color: var(--primary);
+}
+
+.result-summary {
+    color: var(--gray-600);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    margin: 0.5rem 0 0;
+}
+
+/* Meta Items */
+.course-code {
+    display: inline-block;
+    font-family: monospace;
+    font-size: 0.7rem;
+    color: var(--primary);
+    background: var(--primary-bg);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.course-meta, .quiz-meta, .news-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 0.5rem 0;
+}
+
+.meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    color: var(--gray-500);
+}
+
+/* Result Action */
+.result-action {
+    text-align: right;
+}
+
+.btn-view {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--gray-100);
+    border-radius: var(--radius-lg);
+    color: var(--gray-700);
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: var(--transition-fast);
+}
+
+.btn-view:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateX(4px);
+}
+
+/* No Results */
+.no-results {
+    text-align: center;
+    padding: 3rem;
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+}
+
+.no-results-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--gray-100);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+}
+
+.no-results-icon i {
+    font-size: 2.5rem;
+    color: var(--gray-400);
+}
+
+.no-results h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--gray-800);
+}
+
+.no-results p {
+    color: var(--gray-500);
+    margin-bottom: 2rem;
+}
+
+/* No Results Search Form */
+.no-results-search {
+    max-width: 500px;
+    margin: 0 auto 2rem;
+}
+
+.search-input-wrapper {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.search-input-large {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    transition: var(--transition-fast);
+}
+
+.search-input-large:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.search-btn-large {
+    padding: 0.75rem 1.5rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.search-btn-large:hover {
+    background: var(--primary-dark);
+}
+
+/* Search Tips & Categories */
+.search-tips, .search-categories {
+    text-align: left;
+    max-width: 400px;
+    margin: 1rem auto;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+}
+
+.search-tips h5, .search-categories h5 {
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    color: var(--gray-700);
+}
+
+.search-tips ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.search-tips li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--gray-600);
+    margin-bottom: 0.25rem;
+}
+
+.search-tips li i {
+    color: var(--success);
+    font-size: 0.6rem;
+}
+
+.category-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.category-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: white;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    color: var(--gray-600);
+    border: 1px solid var(--gray-200);
+}
+
+/* Pagination */
+.pagination-container {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.page-item {
+    list-style: none;
+}
+
+.page-link {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    color: var(--gray-700);
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+.page-link:hover {
+    background: var(--gray-100);
+}
+
+.page-item.active .page-link {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .search-header {
+        padding: 1.5rem;
+    }
+    
+    .search-header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .search-title {
+        font-size: 1.25rem;
+    }
+    
+    .result-card {
+        padding: 1rem;
+    }
+    
+    .course-meta, .quiz-meta, .news-meta {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .result-action {
+        text-align: left;
+        margin-top: 1rem;
+    }
+    
+    .search-input-wrapper {
+        flex-direction: column;
+    }
+    
+    .no-results {
+        padding: 1.5rem;
+    }
+}
+</style>
 
 {% endblock content %}

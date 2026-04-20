@@ -1,243 +1,838 @@
 {% extends 'base.html' %}
 {% load i18n %}
-{% block title %}{{ title }} | {% trans 'Learning management system' %}{% endblock title %}
 {% load static %}
+
+{% block title %}{{ course.title }} | {% trans 'Course Details' %} | {% trans 'SkyLearn LMS' %}{% endblock title %}
 
 {% block content %}
 
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
         {% if request.user.is_student %}
-        <li class="breadcrumb-item"><a href="{% url 'user_course_list' %}">{% trans 'My courses' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'user_course_list' %}">{% trans 'My Courses' %}</a></li>
         {% else %}
         <li class="breadcrumb-item"><a href="{% url 'programs' %}">{% trans 'Programs' %}</a></li>
         {% endif %}
         <li class="breadcrumb-item"><a href="{% url 'program_detail' course.program.id %}">{{ course.program }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ course }}</li>
+        <li class="breadcrumb-item active" aria-current="page">{{ course.title|truncatechars:50 }}</li>
     </ol>
 </nav>
 
-<div class="manage-wrap">
-    <div class="d-flex">
-        <div class="">
-            {% if request.user.is_superuser %}
-            <a class="btn btn-sm btn-light" href="{% url 'edit_course' course.slug %}">
-                <i class="fas fa-pencil-alt"></i> {% trans 'Edit course' %}
-            </a>
-            {% endif %}
-            {% if request.user.is_superuser or request.user.is_lecturer %}
-            <a class="btn btn-sm btn-primary" href="{% url 'upload_file_view' course.slug %}"><i class="fas fa-plus"></i>
-                {% trans 'Upload new file' %}
-            </a>
-            <a class="btn btn-sm btn-primary" href="{% url 'upload_video' course.slug %}"><i class="fas fa-plus"></i>
-                {% trans 'Upload new video' %}
-            </a>
-            {% endif %}
-        </div>
-        <div class="ms-auto">
-            <a class="btn btn-sm btn-warning" href="{% url 'quiz_index' course.slug %}"><i class="fas fa-list"></i>
-                {% trans 'Take a Quiz' %}
-            </a>
-        </div>
-    </div>
-</div>
-
-<div class="title-1">{{ course }}</div>
-<p class="small text-muted">{{ course.summary }}</p>
-
-{% include 'snippets/messages.html' %}
-
-<div class="container">
-
-    <div class="row mb-5">
-        <div class="col-md-12 p-0">
-            <p class="form-title m-0">{% trans 'Video Tutorials' %}</p>
-            <div class="table-responsive">
-                <table class="table table-shadow table-light table-striped m-0">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>{% trans 'Video Title' %}</th>
-                            <th>{% trans 'Uploaded Date' %}</th>
-                            <th>{% trans 'Get Started' %}</th>
-                            {% if request.user.is_superuser or request.user.is_lecturer %}
-                            <th>{% trans 'Actions' %}</th>
-                            {% endif %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for video in videos %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td>
-                                <a href="{{ video.get_absolute_url }}" title="{{ video }}" class="d-flex align-items-center">
-                                    <i class="fas fa-video me-1"></i> {{ video.title|title }}
-                                </a>
-                            </td>
-                            <td>{{ video.timestamp|date }}</td>
-                            <th>
-                                <div>
-                                    <a class="download-btn" href="{{ video.get_absolute_url }}"
-                                        title="Download to your device">
-                                        <i class="fas fa-play me-1"></i>{% trans 'Play now' %}</a>
-                                </div>
-                            </th>
-
-                            {% if request.user.is_superuser or request.user.is_lecturer %}
-                            <td>
-                                <div class="update-delete">
-                                    <a href="{% url 'upload_video_edit' slug=course.slug video_slug=video.slug %}"
-                                        class="update" title="{% trans 'Edit' %}">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </a>
-                                    <a href="{% url 'upload_video_delete' slug=course.slug video_slug=video.slug %}"
-                                        class="delete" title="{% trans 'Delete' %}">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </a>
-                                </div>
-                            </td>
-                            {% endif %}
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td></td>
-                            <td></td>
-                            <td>
-                                <span class="text-danger">
-                                    {% trans 'No video Uploaded.' %}
-                                    {% if request.user.is_superuser or request.user.is_lecturer %}
-                                    <a href="{% url 'upload_video' course.slug %}" class="text-primary">
-                                        <i class="primary" style="font-size: 22px;">
-                                            {% trans 'Upload now.' %}
-                                        </i>
-                                        {% endif %}
-                                    </a>
-                                </span>
-                            </td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-12 p-0">
-            <p class="form-title m-0">{% trans 'Documentations' %}</p>
-            <div class="table-responsive">
-                <table class="table table-shadow table-light table-striped m-0">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>{% trans 'File name' %}</th>
-                            <th>{% trans 'Uploaded Date' %}</th>
-                            <th>{% trans 'Updated Date' %}</th>
-                            <th>{% trans 'Downloads' %}</th>
-                            {% if request.user.is_superuser or request.user.is_lecturer %}
-                            <th>{% trans 'Actions' %}</th>
-                            {% endif %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for file in files %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td><a href="{{ file.file.url }}" title="{{ file }}" class="d-flex align-items-center">
-                                    <i class="fas fa-file-{{ file.get_extension_short }} me-1"></i>
-                                    {{ file.title|title }}
-                                </a>
-                            </td>
-                            <td>{{ file.upload_time|date }}</td>
-                            <td>{{ file.updated_date|date }}</td>
-                            <th>
-                                <div>
-                                    <a class="download-btn" href="{{ file.file.url }}" title="Download to your device">
-                                        <i class="fas fa-download me-1"></i>{% trans 'Download' %}</a>
-                                </div>
-                            </th>
-
-                            {% if request.user.is_superuser or request.user.is_lecturer %}
-                            <td>
-                                <div class="update-delete">
-                                    <a href="{% url 'upload_file_edit' slug=course.slug file_id=file.pk %}"
-                                        class="update" title="{% trans 'Edit' %}">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </a>
-                                    <a href="{% url 'upload_file_delete' slug=course.slug file_id=file.pk %}"
-                                        class="delete" title="{% trans 'Delete' %}">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </a>
-                                </div>
-                            </td>
-                            {% endif %}
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td></td>
-                            <td></td>
-                            <td>
-                                <span class="text-danger">
-                                    {% trans 'No File Uploaded.' %}
-                                    {% if request.user.is_superuser or request.user.is_lecturer %}
-                                    <a href="{% url 'upload_file_view' course.slug %}" class="text-primary">
-                                        <i class="primary" style="font-size: 22px;">
-                                            {% trans 'Upload now.' %}
-                                        </i>
-                                        {% endif %}
-                                    </a>
-                                </span>
-                            </td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<div class="site-section mb-5 mt-4">
-    <div class="title-1">{% trans 'Lecturer(s)' %}</div>
-    <br>
-    <br>
-    <div class="container-fluid">
-        <div class="row">
-            {% for lecturer in lecturers %}
-            <div class="col-lg-4">
-                <div class="card text-center">
-                    <div class="card-body">
-                        {% if lecturer.lecturer.picture %}
-                        <img class="avatar avatar-lg" src="{{ lecturer.lecturer.picture.url }}" alt="">
-                        {% endif %}
-                        <h5 class="fw-bold mb-0">{{ lecturer|title }}</h5>
-                        <p class="mb-0">{{ lecturer.lecturer.email }}</p>
-                        <p class="text-muted small">Donec sed odio dui. Etiam porta sem malesuada magna mollis euismod.</p>
-                        <p>
-                            <a class="btn btn-sm btn-secondary" href="#" role="button"><i
-                                    class="fab fa-twitter"></i></a>
-                            <a class="btn btn-sm btn-secondary" href="#" role="button"><i
-                                    class="fab fa-facebook-f"></i></a>
-                            <a class="btn btn-sm btn-secondary" href="#" role="button"><i
-                                    class="fab fa-linkedin-in"></i></a>
-                        </p>
+<!-- Course Header -->
+<div class="course-header">
+    <div class="course-header-content">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="course-badges">
+                    <span class="badge-code">{{ course.code }}</span>
+                    <span class="badge-credit"><i class="fas fa-clock"></i> {{ course.credit }} {% trans 'credits' %}</span>
+                    <span class="badge-level">{{ course.level }}</span>
+                </div>
+                <h1 class="course-title">{{ course.title }}</h1>
+                <p class="course-summary">{{ course.summary|default:_('No description available.') }}</p>
+                <div class="course-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>{% trans 'Year:' %} {{ course.year }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-layer-group"></i>
+                        <span>{% trans 'Semester:' %} {{ course.semester }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-tag"></i>
+                        <span>{% if course.is_elective %}{% trans 'Elective' %}{% else %}{% trans 'Core Course' %}{% endif %}</span>
                     </div>
                 </div>
             </div>
-            {% empty %}
-            <h6 class="text-muted mt-3">{% trans 'No lecturer assigned for this course' %}</h6>
-            {% endfor %}
-
+            <div class="col-lg-4">
+                <div class="course-actions">
+                    {% if request.user.is_superuser %}
+                    <a href="{% url 'edit_course' course.slug %}" class="action-btn edit-btn">
+                        <i class="fas fa-edit"></i>
+                        <span>{% trans 'Edit Course' %}</span>
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'quiz_index' course.slug %}" class="action-btn quiz-btn">
+                        <i class="fas fa-puzzle-piece"></i>
+                        <span>{% trans 'Take Quiz' %}</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- Action Bar for Uploads -->
+{% if request.user.is_superuser or request.user.is_lecturer %}
+<div class="action-bar-section">
+    <div class="action-buttons">
+        <a href="{% url 'upload_file_view' course.slug %}" class="btn-upload file">
+            <i class="fas fa-file-upload"></i>
+            <span>{% trans 'Upload File' %}</span>
+        </a>
+        <a href="{% url 'upload_video' course.slug %}" class="btn-upload video">
+            <i class="fas fa-video"></i>
+            <span>{% trans 'Upload Video' %}</span>
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Messages -->
+{% include 'snippets/messages.html' %}
+
+<!-- Video Tutorials Section -->
+<div class="content-section">
+    <div class="section-header">
+        <div class="section-icon">
+            <i class="fas fa-video"></i>
+        </div>
+        <h2 class="section-title">{% trans 'Video Tutorials' %}</h2>
+        <div class="section-count">{{ videos|length }} {% trans 'videos' %}</div>
+    </div>
+    
+    {% if videos %}
+    <div class="videos-grid">
+        {% for video in videos %}
+        <div class="video-card">
+            <div class="video-thumbnail">
+                <div class="video-placeholder">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="video-duration">
+                    <i class="fas fa-clock"></i> 15:30
+                </div>
+            </div>
+            <div class="video-info">
+                <h3 class="video-title">{{ video.title|title }}</h3>
+                <div class="video-meta">
+                    <span class="video-date">
+                        <i class="far fa-calendar-alt"></i> {{ video.timestamp|date:"M d, Y" }}
+                    </span>
+                </div>
+                <div class="video-actions">
+                    <a href="{{ video.get_absolute_url }}" class="btn-play">
+                        <i class="fas fa-play"></i> {% trans 'Watch Now' %}
+                    </a>
+                    {% if request.user.is_superuser or request.user.is_lecturer %}
+                    <div class="dropdown">
+                        <button class="dropdown-btn" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'upload_video_edit' slug=course.slug video_slug=video.slug %}">
+                                    <i class="fas fa-edit"></i> {% trans 'Edit' %}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{% url 'upload_video_delete' slug=course.slug video_slug=video.slug %}" onclick="return confirm('{% trans "Are you sure you want to delete this video?" %}')">
+                                    <i class="fas fa-trash-alt"></i> {% trans 'Delete' %}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-section">
+        <i class="fas fa-video-slash"></i>
+        <h3>{% trans 'No Videos Available' %}</h3>
+        <p>{% trans 'No video tutorials have been uploaded for this course yet.' %}</p>
+        {% if request.user.is_superuser or request.user.is_lecturer %}
+        <a href="{% url 'upload_video' course.slug %}" class="btn-empty-action">
+            <i class="fas fa-upload"></i> {% trans 'Upload First Video' %}
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Documentation Section -->
+<div class="content-section">
+    <div class="section-header">
+        <div class="section-icon">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <h2 class="section-title">{% trans 'Course Materials' %}</h2>
+        <div class="section-count">{{ files|length }} {% trans 'documents' %}</div>
+    </div>
+    
+    {% if files %}
+    <div class="files-grid">
+        {% for file in files %}
+        <div class="file-card">
+            <div class="file-icon">
+                <i class="fas fa-file-{{ file.get_extension_short }}"></i>
+            </div>
+            <div class="file-info">
+                <h3 class="file-title">{{ file.title|title }}</h3>
+                <div class="file-meta">
+                    <span class="file-size">
+                        <i class="fas fa-database"></i> {{ file.file.size|filesizeformat }}
+                    </span>
+                    <span class="file-date">
+                        <i class="far fa-calendar-alt"></i> {{ file.upload_time|date:"M d, Y" }}
+                    </span>
+                </div>
+            </div>
+            <div class="file-actions">
+                <a href="{{ file.file.url }}" class="btn-download" download>
+                    <i class="fas fa-download"></i>
+                    <span>{% trans 'Download' %}</span>
+                </a>
+                {% if request.user.is_superuser or request.user.is_lecturer %}
+                <div class="dropdown">
+                    <button class="dropdown-btn" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'upload_file_edit' slug=course.slug file_id=file.pk %}">
+                                <i class="fas fa-edit"></i> {% trans 'Edit' %}
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="{% url 'upload_file_delete' slug=course.slug file_id=file.pk %}" onclick="return confirm('{% trans "Are you sure you want to delete this file?" %}')">
+                                <i class="fas fa-trash-alt"></i> {% trans 'Delete' %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-section">
+        <i class="fas fa-folder-open"></i>
+        <h3>{% trans 'No Course Materials' %}</h3>
+        <p>{% trans 'No documents have been uploaded for this course yet.' %}</p>
+        {% if request.user.is_superuser or request.user.is_lecturer %}
+        <a href="{% url 'upload_file_view' course.slug %}" class="btn-empty-action">
+            <i class="fas fa-upload"></i> {% trans 'Upload First Document' %}
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Lecturers Section -->
+<div class="content-section">
+    <div class="section-header">
+        <div class="section-icon">
+            <i class="fas fa-chalkboard-user"></i>
+        </div>
+        <h2 class="section-title">{% trans 'Course Instructors' %}</h2>
+        <div class="section-count">{{ lecturers|length }} {% trans 'instructors' %}</div>
+    </div>
+    
+    {% if lecturers %}
+    <div class="lecturers-grid">
+        {% for lecturer in lecturers %}
+        <div class="lecturer-card">
+            <div class="lecturer-avatar">
+                {% if lecturer.lecturer.picture %}
+                <img src="{{ lecturer.lecturer.picture.url }}" alt="{{ lecturer.get_full_name }}">
+                {% else %}
+                <div class="avatar-placeholder">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="lecturer-info">
+                <h3 class="lecturer-name">{{ lecturer.lecturer.get_full_name|default:lecturer.lecturer.username }}</h3>
+                <p class="lecturer-email">
+                    <i class="fas fa-envelope"></i> {{ lecturer.lecturer.email }}
+                </p>
+                <div class="lecturer-social">
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-section small">
+        <i class="fas fa-user-slash"></i>
+        <p>{% trans 'No instructors assigned to this course yet.' %}</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* Course Header */
+.course-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-xl);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.course-header-content {
+    padding: 2rem;
+}
+
+.course-badges {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.badge-code, .badge-credit, .badge-level {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.badge-code {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    font-family: monospace;
+}
+
+.badge-credit {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+.badge-level {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+.course-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.75rem;
+}
+
+.course-summary {
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.course-meta {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.8);
+}
+
+/* Course Actions */
+.course-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+.edit-btn {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+.edit-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.quiz-btn {
+    background: white;
+    color: #667eea;
+}
+
+.quiz-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    color: #667eea;
+}
+
+/* Action Bar Section */
+.action-bar-section {
+    margin-bottom: 1.5rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-upload {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+.btn-upload.file {
+    background: var(--success);
+    color: white;
+}
+
+.btn-upload.video {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-upload:hover {
+    transform: translateY(-2px);
+    color: white;
+}
+
+/* Content Section */
+.content-section {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.section-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--primary-bg);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+}
+
+.section-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    flex: 1;
+}
+
+.section-count {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.75rem;
+    background: white;
+    border-radius: 20px;
+    color: var(--gray-500);
+}
+
+/* Videos Grid */
+.videos-grid {
+    padding: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+}
+
+.video-card {
+    display: flex;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: var(--transition-fast);
+}
+
+.video-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.video-thumbnail {
+    position: relative;
+    width: 120px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-placeholder {
+    color: white;
+    font-size: 2rem;
+}
+
+.video-duration {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.6rem;
+}
+
+.video-info {
+    flex: 1;
+    padding: 0.75rem;
+}
+
+.video-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--gray-800);
+}
+
+.video-meta {
+    margin-bottom: 0.5rem;
+}
+
+.video-date {
+    font-size: 0.6rem;
+    color: var(--gray-500);
+}
+
+.video-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-play {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 20px;
+    text-decoration: none;
+}
+
+.btn-play:hover {
+    background: var(--primary-dark);
+    color: white;
+}
+
+/* Files Grid */
+.files-grid {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.file-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    transition: var(--transition-fast);
+}
+
+.file-card:hover {
+    background: var(--gray-100);
+    transform: translateX(4px);
+}
+
+.file-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-bg);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.file-info {
+    flex: 1;
+}
+
+.file-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--gray-800);
+}
+
+.file-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.6rem;
+    color: var(--gray-500);
+}
+
+.file-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--success);
+    color: white;
+    border-radius: 20px;
+    text-decoration: none;
+}
+
+.btn-download:hover {
+    background: var(--success-dark);
+    color: white;
+}
+
+/* Lecturers Grid */
+.lecturers-grid {
+    padding: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.lecturer-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    transition: var(--transition-fast);
+}
+
+.lecturer-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.lecturer-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--gray-200);
+}
+
+.lecturer-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-bg);
+    color: var(--primary);
+    font-size: 1.5rem;
+}
+
+.lecturer-info {
+    flex: 1;
+}
+
+.lecturer-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--gray-800);
+}
+
+.lecturer-email {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    margin-bottom: 0.5rem;
+}
+
+.lecturer-social {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.social-link {
+    width: 28px;
+    height: 28px;
+    background: var(--gray-200);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-600);
+    transition: var(--transition-fast);
+}
+
+.social-link:hover {
+    background: var(--primary);
+    color: white;
+}
+
+/* Empty Section */
+.empty-section {
+    text-align: center;
+    padding: 3rem;
+}
+
+.empty-section i {
+    font-size: 3rem;
+    color: var(--gray-400);
+    margin-bottom: 1rem;
+}
+
+.empty-section h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--gray-600);
+}
+
+.empty-section p {
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+.empty-section.small {
+    padding: 2rem;
+}
+
+.btn-empty-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: var(--primary);
+    color: white;
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+
+/* Dropdown */
+.dropdown-btn {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    color: var(--gray-500);
+}
+
+.dropdown-btn:hover {
+    background: var(--gray-200);
+}
+
+.dropdown-menu {
+    min-width: 150px;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .course-header-content {
+        padding: 1.5rem;
+    }
+    
+    .course-title {
+        font-size: 1.25rem;
+    }
+    
+    .course-actions {
+        margin-top: 1rem;
+        justify-content: flex-start;
+    }
+    
+    .videos-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .lecturers-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .video-card {
+        flex-direction: column;
+    }
+    
+    .video-thumbnail {
+        width: 100%;
+        height: 150px;
+    }
+    
+    .file-card {
+        flex-wrap: wrap;
+    }
+    
+    .file-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-upload {
+        justify-content: center;
+    }
+}
+</style>
 
 {% endblock content %}

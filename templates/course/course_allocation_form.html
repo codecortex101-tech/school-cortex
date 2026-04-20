@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
 {% load i18n %}
-{% block title %}{{ title }} | {% trans 'Learning management system' %}{% endblock title %}
-{% load crispy_forms_tags %}
 {% load static %}
+
+{% block title %}{% trans 'Course Allocation' %} | {% trans 'SkyLearn LMS' %}{% endblock title %}
 
 {% block content %}
 
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
         <li class="breadcrumb-item"><a href="{% url 'course_allocation_view' %}">{% trans 'Course Allocations' %}</a></li>
@@ -14,25 +15,665 @@
     </ol>
 </nav>
 
-{% include 'snippets/messages.html' %}
-
-<div class="row">
-    <div class="col-md-6 mx-auto">
-        <div class="card">
-            <p class="form-title">{% trans 'Course Allocation Form' %}</p>
-            <div class="p-3">
-                <form action="" method="POST">{% csrf_token %}
-                      {{ form.lecturer|as_crispy_field }}
-                      {{ form.courses|as_crispy_field }}
-                        
-                    {% for course in form.courses.all %}{{ course }}{% endfor %}
-
-                    <input class="btn btn-outline-primary" type="submit" value="{% trans 'Save' %}">
-                </form>
-            </div>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-tasks"></i>
         </div>
-
+        <div class="header-text">
+            <h1 class="header-title">{% trans 'Course Allocation' %}</h1>
+            <p class="header-subtitle">{% trans 'Assign courses to lecturers for the current session' %}</p>
+        </div>
     </div>
 </div>
+
+<!-- Messages -->
+{% include 'snippets/messages.html' %}
+
+<div class="allocation-container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="allocation-card">
+                <div class="card-header-custom">
+                    <div class="header-icon-custom">
+                        <i class="fas fa-chalkboard-user"></i>
+                    </div>
+                    <h3 class="card-title">{% trans 'Course Allocation Form' %}</h3>
+                    <p class="card-subtitle">{% trans 'Select a lecturer and assign multiple courses' %}</p>
+                </div>
+
+                <div class="card-body-custom">
+                    <form action="" method="POST" id="allocationForm">
+                        {% csrf_token %}
+                        
+                        <!-- Lecturer Selection -->
+                        <div class="form-group-modern">
+                            <label for="id_lecturer">
+                                <i class="fas fa-user-tie"></i>
+                                {% trans 'Select Lecturer' %}
+                                <span class="required">*</span>
+                            </label>
+                            <div class="select-wrapper">
+                                <select name="lecturer" id="id_lecturer" class="form-control-modern" required>
+                                    <option value="">{% trans '-- Select a lecturer --' %}</option>
+                                    {% for lecturer in form.lecturer.field.queryset %}
+                                    <option value="{{ lecturer.pk }}">{{ lecturer.get_full_name|default:lecturer.username }} ({{ lecturer.username }})</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="select-icon">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                            </div>
+                            <div class="form-hint">
+                                <i class="fas fa-info-circle"></i>
+                                {% trans 'Select the lecturer who will be teaching these courses' %}
+                            </div>
+                        </div>
+
+                        <!-- Courses Selection -->
+                        <div class="form-group-modern">
+                            <label>
+                                <i class="fas fa-book-open"></i>
+                                {% trans 'Select Courses' %}
+                                <span class="required">*</span>
+                                <span class="selection-count" id="selectedCount">0 {% trans 'selected' %}</span>
+                            </label>
+                            <div class="courses-search">
+                                <div class="search-input-group">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" id="courseSearch" placeholder="{% trans 'Search courses...' %}" class="search-input">
+                                </div>
+                            </div>
+                            <div class="courses-grid" id="coursesGrid">
+                                {% for course in form.courses.field.queryset %}
+                                <label class="course-checkbox-item">
+                                    <input type="checkbox" 
+                                           name="courses" 
+                                           value="{{ course.pk }}" 
+                                           class="course-checkbox"
+                                           data-title="{{ course.title|lower }}"
+                                           data-code="{{ course.code|lower }}">
+                                    <div class="checkbox-content">
+                                        <div class="course-code-badge">{{ course.code }}</div>
+                                        <div class="course-title">{{ course.title }}</div>
+                                        <div class="course-meta">
+                                            <span class="credit"><i class="fas fa-clock"></i> {{ course.credit }} {% trans 'credits' %}</span>
+                                            <span class="semester"><i class="fas fa-layer-group"></i> {{ course.semester }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="checkbox-indicator">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                </label>
+                                {% empty %}
+                                <div class="empty-courses">
+                                    <i class="fas fa-book-open"></i>
+                                    <p>{% trans 'No courses available' %}</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="form-hint">
+                                <i class="fas fa-info-circle"></i>
+                                {% trans 'You can select multiple courses. Click on each course to select/deselect.' %}
+                            </div>
+                        </div>
+
+                        <!-- Session Selection (if exists) -->
+                        {% if form.session %}
+                        <div class="form-group-modern">
+                            <label for="id_session">
+                                <i class="fas fa-calendar-alt"></i>
+                                {% trans 'Academic Session' %}
+                            </label>
+                            <div class="select-wrapper">
+                                <select name="session" id="id_session" class="form-control-modern">
+                                    <option value="">{% trans '-- Select session --' %}</option>
+                                    {% for session in form.session.field.queryset %}
+                                    <option value="{{ session.pk }}">{{ session }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="select-icon">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Action Buttons -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn-submit" id="submitBtn">
+                                <i class="fas fa-save"></i>
+                                <span>{% trans 'Save Allocation' %}</span>
+                            </button>
+                            <a href="{% url 'course_allocation_view' %}" class="btn-cancel">
+                                <i class="fas fa-times"></i>
+                                <span>{% trans 'Cancel' %}</span>
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Allocation Tips -->
+            <div class="info-card">
+                <div class="info-header">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>{% trans 'Allocation Tips' %}</span>
+                </div>
+                <div class="info-body">
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> {% trans 'A lecturer can be assigned to multiple courses' %}</li>
+                        <li><i class="fas fa-check-circle"></i> {% trans 'Each course can be assigned to multiple lecturers' %}</li>
+                        <li><i class="fas fa-check-circle"></i> {% trans 'Course allocations are session-specific' %}</li>
+                        <li><i class="fas fa-check-circle"></i> {% trans 'Allocated courses will appear in the lecturer\'s dashboard' %}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.8);
+}
+
+/* Allocation Container */
+.allocation-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Allocation Card */
+.allocation-card {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.card-header-custom {
+    background: var(--gray-50);
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+    text-align: center;
+}
+
+[data-theme="dark"] .card-header-custom {
+    background: var(--gray-800);
+}
+
+.header-icon-custom {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.card-title {
+    margin: 0 0 0.25rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.card-subtitle {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.card-body-custom {
+    padding: 1.5rem;
+}
+
+/* Form Group Modern */
+.form-group-modern {
+    margin-bottom: 1.5rem;
+}
+
+.form-group-modern label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+.form-group-modern label i {
+    color: var(--primary);
+}
+
+.required {
+    color: var(--error);
+}
+
+.selection-count {
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-weight: normal;
+    background: var(--gray-100);
+    padding: 0.25rem 0.5rem;
+    border-radius: 20px;
+    color: var(--gray-600);
+}
+
+/* Select Wrapper */
+.select-wrapper {
+    position: relative;
+}
+
+.form-control-modern {
+    width: 100%;
+    padding: 0.75rem 2rem 0.75rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    transition: var(--transition-fast);
+    background: white;
+    appearance: none;
+    cursor: pointer;
+}
+
+[data-theme="dark"] .form-control-modern {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--gray-200);
+}
+
+.form-control-modern:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.select-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--gray-400);
+}
+
+/* Courses Search */
+.courses-search {
+    margin-bottom: 1rem;
+}
+
+.search-input-group {
+    display: flex;
+    align-items: center;
+    background: var(--gray-100);
+    border-radius: var(--radius-lg);
+    padding: 0.5rem 1rem;
+    gap: 0.5rem;
+}
+
+.search-input-group i {
+    color: var(--gray-500);
+}
+
+.search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.875rem;
+}
+
+/* Courses Grid */
+.courses-grid {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    background: white;
+}
+
+[data-theme="dark"] .courses-grid {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+}
+
+.course-checkbox-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid var(--gray-200);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.course-checkbox-item:last-child {
+    border-bottom: none;
+}
+
+.course-checkbox-item:hover {
+    background: var(--gray-50);
+}
+
+[data-theme="dark"] .course-checkbox-item:hover {
+    background: var(--gray-600);
+}
+
+.course-checkbox-item input {
+    display: none;
+}
+
+.checkbox-content {
+    flex: 1;
+    margin-right: 1rem;
+}
+
+.course-code-badge {
+    display: inline-block;
+    font-family: monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--primary-bg);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.course-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    margin-bottom: 0.5rem;
+}
+
+.course-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.65rem;
+    color: var(--gray-500);
+}
+
+.course-meta i {
+    margin-right: 0.25rem;
+}
+
+.checkbox-indicator {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--gray-300);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    transition: var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.course-checkbox-item input:checked + .checkbox-content + .checkbox-indicator,
+.course-checkbox-item input:checked ~ .checkbox-indicator {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.checkbox-indicator i {
+    font-size: 0.75rem;
+}
+
+/* Form Hint */
+.form-hint {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--gray-400);
+}
+
+.form-hint i {
+    margin-right: 0.25rem;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.btn-submit, .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition-fast);
+    cursor: pointer;
+    border: none;
+}
+
+.btn-submit {
+    background: var(--success);
+    color: white;
+}
+
+.btn-submit:hover {
+    background: var(--success-dark);
+    transform: translateY(-2px);
+}
+
+.btn-cancel {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.btn-cancel:hover {
+    background: var(--gray-300);
+    transform: translateY(-2px);
+}
+
+/* Info Card */
+.info-card {
+    background: var(--info-bg);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    border-left: 3px solid var(--info);
+}
+
+.info-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--info);
+    margin-bottom: 0.5rem;
+}
+
+.info-body ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-body li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--gray-600);
+    margin-bottom: 0.5rem;
+}
+
+.info-body li i {
+    color: var(--success);
+    font-size: 0.6rem;
+}
+
+/* Empty Courses */
+.empty-courses {
+    text-align: center;
+    padding: 2rem;
+    color: var(--gray-400);
+}
+
+.empty-courses i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-courses p {
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .allocation-container {
+        padding: 0 1rem;
+    }
+    
+    .card-body-custom {
+        padding: 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn-submit, .btn-cancel {
+        justify-content: center;
+    }
+    
+    .course-checkbox-item {
+        flex-wrap: wrap;
+    }
+    
+    .checkbox-indicator {
+        margin-left: auto;
+    }
+}
+</style>
+
+<script>
+// Course search functionality
+const searchInput = document.getElementById('courseSearch');
+const courseItems = document.querySelectorAll('.course-checkbox-item');
+
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        courseItems.forEach(item => {
+            const title = item.querySelector('.course-title')?.textContent.toLowerCase() || '';
+            const code = item.querySelector('.course-code-badge')?.textContent.toLowerCase() || '';
+            
+            if (title.includes(searchTerm) || code.includes(searchTerm)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+}
+
+// Update selection count
+function updateSelectionCount() {
+    const checkboxes = document.querySelectorAll('.course-checkbox:checked');
+    const count = checkboxes.length;
+    const countDisplay = document.getElementById('selectedCount');
+    if (countDisplay) {
+        countDisplay.textContent = `${count} selected`;
+    }
+}
+
+// Add event listeners to checkboxes
+document.querySelectorAll('.course-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateSelectionCount);
+});
+
+// Initial count
+updateSelectionCount();
+
+// Form submission with loading state
+document.getElementById('allocationForm')?.addEventListener('submit', function(e) {
+    const checkboxes = document.querySelectorAll('.course-checkbox:checked');
+    if (checkboxes.length === 0) {
+        e.preventDefault();
+        alert('{% trans "Please select at least one course to allocate." %}');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>{% trans "Saving..." %}</span>';
+});
+
+// Click on course item to toggle checkbox
+document.querySelectorAll('.course-checkbox-item').forEach(item => {
+    const checkbox = item.querySelector('.course-checkbox');
+    item.addEventListener('click', (e) => {
+        // Don't toggle if clicking on the checkbox itself (handled separately)
+        if (e.target.type !== 'checkbox') {
+            checkbox.checked = !checkbox.checked;
+            // Trigger change event
+            const event = new Event('change');
+            checkbox.dispatchEvent(event);
+        }
+    });
+});
+</script>
 
 {% endblock content %}

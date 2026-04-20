@@ -1,18 +1,370 @@
-
 {% if messages %}
+<div class="messages-container" id="messagesContainer">
     {% for message in messages %}
-        {% if message.tags == 'error' %}
-            <div class="alert py-2 alert-danger d-flex align-items-center">
-                <i class="fas fa-exclamation-circle me-2" style="min-width: 35px;"></i><span>{{ message }}</span>
+        {% with message.tags as tag %}
+        <div class="notification-toast {% if tag == 'error' %}notification-error{% elif tag == 'warning' %}notification-warning{% else %}notification-success{% endif %}" 
+             role="alert"
+             data-auto-dismiss="5000">
+            <div class="notification-icon">
+                {% if tag == 'error' %}
+                    <i class="fas fa-times-circle"></i>
+                {% elif tag == 'warning' %}
+                    <i class="fas fa-exclamation-triangle"></i>
+                {% elif tag == 'success' %}
+                    <i class="fas fa-check-circle"></i>
+                {% else %}
+                    <i class="fas fa-info-circle"></i>
+                {% endif %}
             </div>
-        {% elif message.tags == 'warning' %}
-            <div class="alert py-2 alert-warning d-flex align-items-center">
-                <i class="fas fa-exclamation-circle me-2" style="min-width: 35px;"></i><span>{{ message }}</span>
+            <div class="notification-content">
+                <div class="notification-title">
+                    {% if tag == 'error' %}
+                        Error
+                    {% elif tag == 'warning' %}
+                        Warning
+                    {% elif tag == 'success' %}
+                        Success
+                    {% else %}
+                        Notice
+                    {% endif %}
+                </div>
+                <div class="notification-message">{{ message }}</div>
             </div>
-        {% else %}
-            <div class="alert py-2 alert-success d-flex align-items-center">
-                <i class="fas fa-check-circle me-2" style="min-width: 35px;"></i><span>{{ message }}</span>
-            </div>
-        {% endif %}
+            <button class="notification-close" onclick="this.parentElement.remove()" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="notification-progress"></div>
+        </div>
+        {% endwith %}
     {% endfor %}
+</div>
+
+<style>
+/* Messages Container */
+.messages-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 380px;
+    pointer-events: none;
+}
+
+/* Notification Toast */
+.notification-toast {
+    position: relative;
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    pointer-events: auto;
+    animation: slideInRight 0.3s ease forwards;
+    overflow: hidden;
+    border-left: 4px solid;
+}
+
+[data-theme="dark"] .notification-toast {
+    background: var(--gray-800);
+}
+
+/* Notification Types */
+.notification-success {
+    border-left-color: var(--success);
+}
+
+.notification-success .notification-icon {
+    color: var(--success);
+}
+
+.notification-error {
+    border-left-color: var(--error);
+}
+
+.notification-error .notification-icon {
+    color: var(--error);
+}
+
+.notification-warning {
+    border-left-color: var(--warning);
+}
+
+.notification-warning .notification-icon {
+    color: var(--warning);
+}
+
+/* Notification Icon */
+.notification-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.notification-success .notification-icon {
+    background: var(--success-bg);
+}
+
+.notification-error .notification-icon {
+    background: var(--error-bg);
+}
+
+.notification-warning .notification-icon {
+    background: var(--warning-bg);
+}
+
+/* Notification Content */
+.notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--gray-800);
+}
+
+[data-theme="dark"] .notification-title {
+    color: var(--gray-200);
+}
+
+.notification-message {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+[data-theme="dark"] .notification-message {
+    color: var(--gray-400);
+}
+
+/* Close Button */
+.notification-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    color: var(--gray-400);
+    transition: var(--transition-fast);
+}
+
+.notification-close:hover {
+    background: var(--gray-100);
+    color: var(--gray-600);
+}
+
+[data-theme="dark"] .notification-close:hover {
+    background: var(--gray-700);
+}
+
+/* Progress Bar */
+.notification-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.1);
+    width: 100%;
+    animation: progress 5s linear forwards;
+}
+
+[data-theme="dark"] .notification-progress {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.notification-success .notification-progress {
+    background: var(--success);
+}
+
+.notification-error .notification-progress {
+    background: var(--error);
+}
+
+.notification-warning .notification-progress {
+    background: var(--warning);
+}
+
+/* Animations */
+@keyframes slideInRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+@keyframes progress {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+/* Remove animation */
+.notification-toast.removing {
+    animation: slideOutRight 0.3s ease forwards;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .messages-container {
+        top: 70px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .notification-toast {
+        padding: 12px;
+    }
+    
+    .notification-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.875rem;
+    }
+    
+    .notification-title {
+        font-size: 0.8rem;
+    }
+    
+    .notification-message {
+        font-size: 0.7rem;
+    }
+}
+
+/* Stacked Notifications */
+.notification-toast {
+    margin-bottom: 0;
+}
+
+.notification-toast + .notification-toast {
+    margin-top: 12px;
+}
+
+/* Hover Effect */
+.notification-toast:hover {
+    transform: translateX(-4px);
+    transition: transform 0.2s ease;
+}
+
+.notification-toast:hover .notification-progress {
+    animation-play-state: paused;
+}
+</style>
+
+<script>
+// Auto-dismiss notifications
+document.addEventListener('DOMContentLoaded', function() {
+    const notifications = document.querySelectorAll('.notification-toast[data-auto-dismiss]');
+    
+    notifications.forEach(notification => {
+        const dismissTime = parseInt(notification.getAttribute('data-auto-dismiss')) || 5000;
+        
+        // Auto remove after timeout
+        const timeout = setTimeout(() => {
+            removeNotification(notification);
+        }, dismissTime);
+        
+        // Pause auto-dismiss on hover
+        notification.addEventListener('mouseenter', () => {
+            clearTimeout(timeout);
+            const progressBar = notification.querySelector('.notification-progress');
+            if (progressBar) {
+                progressBar.style.animationPlayState = 'paused';
+            }
+        });
+        
+        notification.addEventListener('mouseleave', () => {
+            const progressBar = notification.querySelector('.notification-progress');
+            if (progressBar) {
+                progressBar.style.animationPlayState = 'running';
+            }
+        });
+    });
+});
+
+// Function to remove notification with animation
+function removeNotification(notification) {
+    notification.classList.add('removing');
+    setTimeout(() => {
+        notification.remove();
+        
+        // Check if container is empty and remove it
+        const container = document.getElementById('messagesContainer');
+        if (container && container.children.length === 0) {
+            container.remove();
+        }
+    }, 300);
+}
+
+// Global function to show toast messages (for AJAX responses)
+window.showToast = function(message, type = 'success') {
+    let container = document.getElementById('messagesContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'messagesContainer';
+        container.className = 'messages-container';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `notification-toast notification-${type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'success'}`;
+    toast.setAttribute('data-auto-dismiss', '5000');
+    toast.innerHTML = `
+        <div class="notification-icon">
+            <i class="fas fa-${type === 'error' ? 'times-circle' : type === 'warning' ? 'exclamation-triangle' : 'check-circle'}"></i>
+        </div>
+        <div class="notification-content">
+            <div class="notification-title">${type === 'error' ? 'Error' : type === 'warning' ? 'Warning' : 'Success'}</div>
+            <div class="notification-message">${message}</div>
+        </div>
+        <button class="notification-close" onclick="this.parentElement.remove()" aria-label="Close">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="notification-progress"></div>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Auto dismiss
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.classList.add('removing');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 5000);
+};
+</script>
+
 {% endif %}

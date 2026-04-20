@@ -1,46 +1,686 @@
 {% extends 'base.html' %}
 {% load i18n %}
-{% block title %}{{ title }} | {% trans 'Learning management system' %}{% endblock title %}
-{% load crispy_forms_tags %}
 {% load static %}
+
+{% block title %}{% trans 'Account Settings' %} | {% trans 'SkyLearn LMS' %}{% endblock title %}
 
 {% block content %}
 
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{% trans 'Account setting' %}</li>
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">{% trans 'Profile' %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans 'Account Settings' %}</li>
     </ol>
 </nav>
 
-<p class="title-1"><i class="fas fa-user-edit"></i>{% trans 'Account Settings' %}</p>
-
-{% include 'snippets/messages.html' %}
-
-<form action="" method="POST" enctype="multipart/form-data">{% csrf_token %}
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="form-title">{% trans 'Email' %} &amp; {% trans 'Personal Info' %}</div>
-                <div class="card-body">
-                    {{ form.email|as_crispy_field }}
-                    {{ form.first_name|as_crispy_field }}
-                    {{ form.last_name|as_crispy_field }}
-                    {{ form.gender|as_crispy_field }}
-                    {{ form.phone|as_crispy_field }}
-                    {{ form.address|as_crispy_field }}
-                </div>
-            </div>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-user-cog"></i>
         </div>
-        <div class="col-md-6">
-            <div class="card">
-                <p class="form-title">{% trans 'Others' %}</p>
-                <div class="card-body">
-                    {{ form.picture|as_crispy_field }}
-                </div>
-            </div>
+        <div class="header-text">
+            <h1 class="header-title">{% trans 'Account Settings' %}</h1>
+            <p class="header-subtitle">{% trans 'Update your personal information and profile picture' %}</p>
         </div>
     </div>
-    <button class="btn btn-primary" type="submit">{% trans 'Update Profile' %}</button>
-</form>
+</div>
+
+<!-- Messages -->
+{% include 'snippets/messages.html' %}
+
+<div class="settings-container">
+    <form action="" method="POST" enctype="multipart/form-data" id="profileForm">
+        {% csrf_token %}
+        
+        <div class="row g-4">
+            <!-- Left Column - Personal Information -->
+            <div class="col-lg-7">
+                <div class="settings-card">
+                    <div class="card-header-custom">
+                        <div class="header-icon-custom">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h3 class="card-title">{% trans 'Personal Information' %}</h3>
+                        <p class="card-subtitle">{% trans 'Update your personal details' %}</p>
+                    </div>
+                    <div class="card-body-custom">
+                        <!-- Email -->
+                        <div class="form-group-modern">
+                            <label for="id_email">
+                                <i class="fas fa-envelope"></i>
+                                {% trans 'Email Address' %}
+                                <span class="required">*</span>
+                            </label>
+                            <input type="email" 
+                                   name="email" 
+                                   id="id_email" 
+                                   class="form-control-modern" 
+                                   value="{{ form.email.value|default:'' }}"
+                                   placeholder="{% trans 'your@email.com' %}"
+                                   required>
+                            {% if form.email.errors %}
+                            <div class="error-message">
+                                {% for error in form.email.errors %}
+                                <i class="fas fa-exclamation-circle"></i> {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label for="id_first_name">
+                                        <i class="fas fa-user"></i>
+                                        {% trans 'First Name' %}
+                                    </label>
+                                    <input type="text" 
+                                           name="first_name" 
+                                           id="id_first_name" 
+                                           class="form-control-modern" 
+                                           value="{{ form.first_name.value|default:'' }}"
+                                           placeholder="{% trans 'Your first name' %}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label for="id_last_name">
+                                        <i class="fas fa-user"></i>
+                                        {% trans 'Last Name' %}
+                                    </label>
+                                    <input type="text" 
+                                           name="last_name" 
+                                           id="id_last_name" 
+                                           class="form-control-modern" 
+                                           value="{{ form.last_name.value|default:'' }}"
+                                           placeholder="{% trans 'Your last name' %}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label for="id_gender">
+                                        <i class="fas fa-venus-mars"></i>
+                                        {% trans 'Gender' %}
+                                    </label>
+                                    <select name="gender" id="id_gender" class="form-control-modern">
+                                        <option value="">{% trans 'Select gender' %}</option>
+                                        <option value="M" {% if form.gender.value == 'M' %}selected{% endif %}>{% trans 'Male' %}</option>
+                                        <option value="F" {% if form.gender.value == 'F' %}selected{% endif %}>{% trans 'Female' %}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label for="id_phone">
+                                        <i class="fas fa-phone"></i>
+                                        {% trans 'Phone Number' %}
+                                    </label>
+                                    <input type="tel" 
+                                           name="phone" 
+                                           id="id_phone" 
+                                           class="form-control-modern" 
+                                           value="{{ form.phone.value|default:'' }}"
+                                           placeholder="{% trans '+1234567890' %}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label for="id_address">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {% trans 'Address' %}
+                            </label>
+                            <textarea name="address" 
+                                      id="id_address" 
+                                      class="form-control-modern" 
+                                      rows="3"
+                                      placeholder="{% trans 'Your address' %}">{{ form.address.value|default:'' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Profile Picture -->
+            <div class="col-lg-5">
+                <div class="settings-card">
+                    <div class="card-header-custom">
+                        <div class="header-icon-custom">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <h3 class="card-title">{% trans 'Profile Picture' %}</h3>
+                        <p class="card-subtitle">{% trans 'Update your profile photo' %}</p>
+                    </div>
+                    <div class="card-body-custom text-center">
+                        <!-- Current Profile Picture -->
+                        <div class="profile-picture-container">
+                            <div class="current-picture">
+                                <img id="profilePreview" 
+                                     src="{{ request.user.picture.url }}" 
+                                     alt="{{ request.user.get_full_name }}"
+                                     class="profile-preview-img">
+                                <div class="picture-overlay" id="pictureOverlay">
+                                    <i class="fas fa-camera"></i>
+                                    <span>{% trans 'Change Photo' %}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- File Input (Hidden) -->
+                        <input type="file" 
+                               name="picture" 
+                               id="id_picture" 
+                               class="file-input-hidden" 
+                               accept="image/jpeg,image/png,image/jpg,image/gif">
+
+                        <!-- Upload Info -->
+                        <div class="upload-info">
+                            <i class="fas fa-info-circle"></i>
+                            <p>{% trans 'Recommended: Square image, minimum 300x300 pixels. Max size: 5MB' %}</p>
+                        </div>
+
+                        <!-- Upload Buttons -->
+                        <div class="upload-buttons">
+                            <button type="button" class="btn-upload" id="uploadBtn">
+                                <i class="fas fa-upload"></i>
+                                <span>{% trans 'Choose Photo' %}</span>
+                            </button>
+                            <button type="button" class="btn-remove" id="removeBtn" style="display: none;">
+                                <i class="fas fa-trash-alt"></i>
+                                <span>{% trans 'Remove' %}</span>
+                            </button>
+                        </div>
+
+                        {% if form.picture.errors %}
+                        <div class="error-message">
+                            {% for error in form.picture.errors %}
+                            <i class="fas fa-exclamation-circle"></i> {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        <i class="fas fa-save"></i>
+                        <span>{% trans 'Save Changes' %}</span>
+                    </button>
+                    <a href="{% url 'profile' %}" class="btn-cancel">
+                        <i class="fas fa-times"></i>
+                        <span>{% trans 'Cancel' %}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.8);
+}
+
+/* Settings Container */
+.settings-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* Settings Card */
+.settings-card {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    height: 100%;
+}
+
+.card-header-custom {
+    background: var(--gray-50);
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+[data-theme="dark"] .card-header-custom {
+    background: var(--gray-800);
+}
+
+.header-icon-custom {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-bg);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+.card-title {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.card-subtitle {
+    margin: 0;
+    font-size: 0.7rem;
+    color: var(--gray-500);
+}
+
+.card-body-custom {
+    padding: 1.5rem;
+}
+
+/* Form Groups */
+.form-group-modern {
+    margin-bottom: 1.25rem;
+}
+
+.form-group-modern label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+.form-group-modern label i {
+    color: var(--primary);
+}
+
+.required {
+    color: var(--error);
+}
+
+.form-control-modern {
+    width: 100%;
+    padding: 0.625rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    transition: var(--transition-fast);
+    background: white;
+}
+
+[data-theme="dark"] .form-control-modern {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--gray-200);
+}
+
+.form-control-modern:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+textarea.form-control-modern {
+    resize: vertical;
+}
+
+/* Profile Picture */
+.profile-picture-container {
+    margin-bottom: 1rem;
+}
+
+.current-picture {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.profile-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.picture-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    opacity: 0;
+    transition: var(--transition-fast);
+}
+
+.current-picture:hover .picture-overlay {
+    opacity: 1;
+}
+
+.picture-overlay i {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.picture-overlay span {
+    font-size: 0.7rem;
+}
+
+/* File Input Hidden */
+.file-input-hidden {
+    display: none;
+}
+
+/* Upload Info */
+.upload-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--info-bg);
+    border-radius: var(--radius-lg);
+    margin: 1rem 0;
+    text-align: left;
+}
+
+.upload-info i {
+    color: var(--info);
+    margin-top: 0.125rem;
+}
+
+.upload-info p {
+    font-size: 0.65rem;
+    color: var(--gray-600);
+    margin: 0;
+}
+
+/* Upload Buttons */
+.upload-buttons {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.btn-upload, .btn-remove {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    border: none;
+}
+
+.btn-upload {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-upload:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.btn-remove {
+    background: var(--error-bg);
+    color: var(--error);
+}
+
+.btn-remove:hover {
+    background: var(--error);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.btn-submit, .btn-cancel {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition-fast);
+    cursor: pointer;
+    border: none;
+}
+
+.btn-submit {
+    background: var(--success);
+    color: white;
+}
+
+.btn-submit:hover {
+    background: var(--success-dark);
+    transform: translateY(-2px);
+}
+
+.btn-cancel {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.btn-cancel:hover {
+    background: var(--gray-300);
+    transform: translateY(-2px);
+}
+
+.btn-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Error Message */
+.error-message {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: var(--error-bg);
+    color: var(--error);
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .card-body-custom {
+        padding: 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .current-picture {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .upload-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-upload, .btn-remove {
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+// Image preview functionality
+const pictureInput = document.getElementById('id_picture');
+const profilePreview = document.getElementById('profilePreview');
+const uploadBtn = document.getElementById('uploadBtn');
+const removeBtn = document.getElementById('removeBtn');
+const pictureOverlay = document.getElementById('pictureOverlay');
+
+// Trigger file input when clicking upload button or overlay
+if (uploadBtn) {
+    uploadBtn.addEventListener('click', function() {
+        pictureInput.click();
+    });
+}
+
+if (pictureOverlay) {
+    pictureOverlay.addEventListener('click', function() {
+        pictureInput.click();
+    });
+}
+
+// Preview image when selected
+if (pictureInput) {
+    pictureInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('{% trans "File size exceeds 5MB limit. Please choose a smaller image." %}');
+                pictureInput.value = '';
+                return;
+            }
+            
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('{% trans "Invalid file type. Please upload JPEG, PNG, or GIF image." %}');
+                pictureInput.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePreview.src = e.target.result;
+                if (removeBtn) removeBtn.style.display = 'inline-flex';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+// Remove profile picture
+if (removeBtn) {
+    removeBtn.addEventListener('click', function() {
+        if (confirm('{% trans "Are you sure you want to remove your profile picture?" %}')) {
+            // Clear the file input
+            pictureInput.value = '';
+            // Reset to default image
+            profilePreview.src = '{{ request.user.picture.url }}';
+            removeBtn.style.display = 'none';
+        }
+    });
+}
+
+// Check if user has a custom picture (not default)
+const defaultPic = '{{ request.user.picture.url }}';
+const isDefault = defaultPic.includes('default.png');
+if (!isDefault && removeBtn) {
+    removeBtn.style.display = 'inline-flex';
+}
+
+// Form submission with loading state
+document.getElementById('profileForm').addEventListener('submit', function(e) {
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>{% trans "Saving..." %}</span>';
+});
+
+// Email validation
+const emailInput = document.getElementById('id_email');
+if (emailInput) {
+    emailInput.addEventListener('input', function() {
+        const email = this.value;
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (email && !emailPattern.test(email)) {
+            this.classList.add('error');
+            let errorDiv = this.parentElement.querySelector('.error-message');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                this.parentElement.appendChild(errorDiv);
+            }
+            errorDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> {% trans "Please enter a valid email address." %}';
+        } else {
+            this.classList.remove('error');
+            const errorDiv = this.parentElement.querySelector('.error-message');
+            if (errorDiv) errorDiv.remove();
+        }
+    });
+}
+</script>
+
 {% endblock content %}

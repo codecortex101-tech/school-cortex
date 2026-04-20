@@ -1,41 +1,669 @@
 {% extends 'base.html' %}
 {% load i18n %}
-{% block title %}{{ title }} | {% trans 'Learning management system' %}{% endblock title %}
-{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}{% trans 'Upload File' %} | {{ course.title }} | {% trans 'SkyLearn LMS' %}{% endblock title %}
 
 {% block content %}
 
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
         <li class="breadcrumb-item"><a href="{% url 'programs' %}">{% trans 'Programs' %}</a></li>
         <li class="breadcrumb-item"><a href="{% url 'program_detail' course.program.id %}">{{ course.program }}</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'course_detail' course.slug %}">{{ course }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{% trans 'File upload' %}</li>
+        <li class="breadcrumb-item"><a href="{% url 'course_detail' course.slug %}">{{ course.title|truncatechars:30 }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans 'File Upload' %}</li>
     </ol>
 </nav>
-    
-<p class="title-1">{% trans 'File upload for' %} {{ course|truncatechars:25 }}</p>
-<br><br>
 
-{% include 'snippets/messages.html' %}
-
-<div class="row">
-    <div class="col-md-8 p-0 mx-auto">
-        <div class="card">
-            <p class="form-title">{% trans 'File Upload Form' %}</p>
-
-            <div class="card-body">
-                <form action="" method="POST" enctype="multipart/form-data">{% csrf_token %}
-                    {{ form|crispy }}
-                    
-                    <div class="form-group">
-                        <button class="btn btn-primary" type="submit">{% trans 'Upload' %}</button>
-                        <a class="btn btn-danger" href="{% url 'course_detail' course.slug %}" style="float: right;">{% trans 'Cancel' %}</a>
-                    </div>
-            </form>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-file-upload"></i>
+        </div>
+        <div class="header-text">
+            <h1 class="header-title">{% trans 'Upload Course Material' %}</h1>
+            <p class="header-subtitle">{{ course.title }}</p>
         </div>
     </div>
 </div>
+
+<!-- Messages -->
+{% include 'snippets/messages.html' %}
+
+<div class="upload-container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="upload-card">
+                <div class="card-header-custom">
+                    <div class="header-icon-custom">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h3 class="card-title">{% trans 'Upload File' %}</h3>
+                    <p class="card-subtitle">{% trans 'Upload course materials, documents, and resources' %}</p>
+                </div>
+
+                <div class="card-body-custom">
+                    <form action="" method="POST" enctype="multipart/form-data" id="uploadForm">
+                        {% csrf_token %}
+                        
+                        <!-- Title Field -->
+                        <div class="form-group-modern">
+                            <label for="id_title">
+                                <i class="fas fa-heading"></i>
+                                {% trans 'File Title' %}
+                                <span class="required">*</span>
+                            </label>
+                            <input type="text" 
+                                   name="title" 
+                                   id="id_title" 
+                                   class="form-control-modern" 
+                                   placeholder="{% trans 'Enter a descriptive title for this file' %}"
+                                   required>
+                            <div class="form-hint">
+                                <i class="fas fa-info-circle"></i>
+                                {% trans 'Use a clear title that describes the content (e.g., "Chapter 1 - Introduction")' %}
+                            </div>
+                        </div>
+
+                        <!-- File Upload Area -->
+                        <div class="form-group-modern">
+                            <label>
+                                <i class="fas fa-paperclip"></i>
+                                {% trans 'Select File' %}
+                                <span class="required">*</span>
+                            </label>
+                            <div class="dropzone-area" id="dropzoneArea">
+                                <div class="dropzone-content">
+                                    <div class="upload-icon">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </div>
+                                    <p class="dropzone-text">
+                                        <strong>{% trans 'Drag and drop your file here' %}</strong><br>
+                                        {% trans 'or click to browse' %}
+                                    </p>
+                                    <p class="dropzone-hint">
+                                        {% trans 'Supported formats:' %} PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, ZIP, RAR, 7ZIP
+                                    </p>
+                                </div>
+                                <input type="file" 
+                                       name="file" 
+                                       id="id_file" 
+                                       class="file-input" 
+                                       accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7zip"
+                                       required>
+                            </div>
+                            <div class="file-preview" id="filePreview" style="display: none;">
+                                <div class="preview-card">
+                                    <div class="preview-icon" id="previewIcon">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <div class="preview-info">
+                                        <span class="preview-name" id="previewName"></span>
+                                        <span class="preview-size" id="previewSize"></span>
+                                    </div>
+                                    <button type="button" class="preview-remove" id="removeFileBtn">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-hint">
+                                <i class="fas fa-shield-alt"></i>
+                                {% trans 'Maximum file size: 10MB. All files are scanned for security.' %}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn-submit" id="submitBtn">
+                                <i class="fas fa-upload"></i>
+                                <span>{% trans 'Upload File' %}</span>
+                            </button>
+                            <a href="{% url 'course_detail' course.slug %}" class="btn-cancel">
+                                <i class="fas fa-times"></i>
+                                <span>{% trans 'Cancel' %}</span>
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Upload Tips -->
+            <div class="info-card">
+                <div class="info-header">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>{% trans 'Upload Tips' %}</span>
+                </div>
+                <div class="info-body">
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> {% trans 'Use clear, descriptive file names' %}</li>
+                        <li><i class="fas fa-check-circle"></i> {% trans 'Organize materials by chapter or topic' %}</li>
+                        <li><i class="fas fa-check-circle"></i> {% trans 'Keep file sizes under 10MB for faster downloads' %}</li>
+                        <li><i class="fas fa-check-circle"></i> {% trans 'Avoid special characters in filenames' %}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.8);
+}
+
+/* Upload Container */
+.upload-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Upload Card */
+.upload-card {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.card-header-custom {
+    background: var(--gray-50);
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+    text-align: center;
+}
+
+[data-theme="dark"] .card-header-custom {
+    background: var(--gray-800);
+}
+
+.header-icon-custom {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.card-title {
+    margin: 0 0 0.25rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.card-subtitle {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.card-body-custom {
+    padding: 1.5rem;
+}
+
+/* Form Group Modern */
+.form-group-modern {
+    margin-bottom: 1.5rem;
+}
+
+.form-group-modern label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+.form-group-modern label i {
+    color: var(--primary);
+}
+
+.required {
+    color: var(--error);
+}
+
+.form-control-modern {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    transition: var(--transition-fast);
+    background: white;
+}
+
+[data-theme="dark"] .form-control-modern {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--gray-200);
+}
+
+.form-control-modern:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Dropzone Area */
+.dropzone-area {
+    position: relative;
+    border: 2px dashed var(--gray-300);
+    border-radius: var(--radius-xl);
+    background: var(--gray-50);
+    transition: var(--transition-fast);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.dropzone-area:hover {
+    border-color: var(--primary);
+    background: var(--primary-bg);
+}
+
+.dropzone-area.drag-over {
+    border-color: var(--primary);
+    background: var(--primary-bg);
+}
+
+.dropzone-content {
+    padding: 2rem;
+    text-align: center;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: var(--gray-400);
+    margin-bottom: 1rem;
+}
+
+.dropzone-text {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin-bottom: 0.5rem;
+}
+
+.dropzone-hint {
+    font-size: 0.7rem;
+    color: var(--gray-400);
+}
+
+.file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* File Preview */
+.file-preview {
+    margin-top: 1rem;
+}
+
+.preview-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-200);
+}
+
+.preview-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-bg);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.preview-info {
+    flex: 1;
+}
+
+.preview-name {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    word-break: break-all;
+}
+
+.preview-size {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--gray-500);
+}
+
+.preview-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--gray-400);
+    padding: 0.25rem;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fast);
+}
+
+.preview-remove:hover {
+    color: var(--error);
+    background: var(--error-bg);
+}
+
+/* Form Hint */
+.form-hint {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--gray-400);
+}
+
+.form-hint i {
+    margin-right: 0.25rem;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.btn-submit, .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition-fast);
+    cursor: pointer;
+    border: none;
+}
+
+.btn-submit {
+    background: var(--success);
+    color: white;
+}
+
+.btn-submit:hover {
+    background: var(--success-dark);
+    transform: translateY(-2px);
+}
+
+.btn-cancel {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.btn-cancel:hover {
+    background: var(--gray-300);
+    transform: translateY(-2px);
+}
+
+/* Info Card */
+.info-card {
+    background: var(--info-bg);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    border-left: 3px solid var(--info);
+}
+
+.info-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--info);
+    margin-bottom: 0.5rem;
+}
+
+.info-body ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-body li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--gray-600);
+    margin-bottom: 0.5rem;
+}
+
+.info-body li i {
+    color: var(--success);
+    font-size: 0.6rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .upload-container {
+        padding: 0 1rem;
+    }
+    
+    .card-body-custom {
+        padding: 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn-submit, .btn-cancel {
+        justify-content: center;
+    }
+    
+    .dropzone-content {
+        padding: 1.5rem;
+    }
+    
+    .upload-icon {
+        font-size: 2rem;
+    }
+}
+</style>
+
+<script>
+// Drag and drop functionality
+const dropzone = document.getElementById('dropzoneArea');
+const fileInput = document.getElementById('id_file');
+const filePreview = document.getElementById('filePreview');
+const previewName = document.getElementById('previewName');
+const previewSize = document.getElementById('previewSize');
+const previewIcon = document.getElementById('previewIcon');
+const removeFileBtn = document.getElementById('removeFileBtn');
+
+// Prevent default drag behaviors
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, preventDefaults, false);
+    document.body.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+// Highlight drop zone on drag
+['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight() {
+    dropzone.classList.add('drag-over');
+}
+
+function unhighlight() {
+    dropzone.classList.remove('drag-over');
+}
+
+// Handle dropped files
+dropzone.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    fileInput.files = files;
+    handleFile(files[0]);
+}
+
+// Handle file input change
+fileInput.addEventListener('change', function() {
+    if (this.files.length > 0) {
+        handleFile(this.files[0]);
+    }
+});
+
+// Remove file button
+removeFileBtn.addEventListener('click', function() {
+    fileInput.value = '';
+    filePreview.style.display = 'none';
+});
+
+function handleFile(file) {
+    // Validate file type
+    const allowedTypes = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.zip', '.rar', '.7zip'];
+    const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+    
+    if (!allowedTypes.includes(fileExt)) {
+        alert('{% trans "Invalid file type. Please upload a supported file format." %}');
+        fileInput.value = '';
+        return;
+    }
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        alert('{% trans "File size exceeds 10MB limit. Please compress your file." %}');
+        fileInput.value = '';
+        return;
+    }
+    
+    // Update preview
+    previewName.textContent = file.name;
+    previewSize.textContent = formatFileSize(file.size);
+    
+    // Set icon based on file type
+    if (fileExt === '.pdf') {
+        previewIcon.innerHTML = '<i class="fas fa-file-pdf"></i>';
+    } else if (['.doc', '.docx'].includes(fileExt)) {
+        previewIcon.innerHTML = '<i class="fas fa-file-word"></i>';
+    } else if (['.xls', '.xlsx'].includes(fileExt)) {
+        previewIcon.innerHTML = '<i class="fas fa-file-excel"></i>';
+    } else if (['.ppt', '.pptx'].includes(fileExt)) {
+        previewIcon.innerHTML = '<i class="fas fa-file-powerpoint"></i>';
+    } else if (['.zip', '.rar', '.7zip'].includes(fileExt)) {
+        previewIcon.innerHTML = '<i class="fas fa-file-archive"></i>';
+    } else {
+        previewIcon.innerHTML = '<i class="fas fa-file-alt"></i>';
+    }
+    
+    filePreview.style.display = 'block';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Form submission with loading state
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    const title = document.getElementById('id_title').value;
+    const file = fileInput.files[0];
+    
+    if (!title) {
+        e.preventDefault();
+        alert('{% trans "Please enter a file title." %}');
+        return;
+    }
+    
+    if (!file) {
+        e.preventDefault();
+        alert('{% trans "Please select a file to upload." %}');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>{% trans "Uploading..." %}</span>';
+});
+
+// Title validation
+document.getElementById('id_title').addEventListener('input', function() {
+    if (this.value.length > 100) {
+        this.value = this.value.substring(0, 100);
+    }
+});
+</script>
 
 {% endblock content %}

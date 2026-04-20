@@ -1,9 +1,669 @@
 {% extends 'base.html' %}
-{% block title %}PayLike{% endblock title %}
+{% load i18n %}
 {% load static %}
 
+{% block title %}{% trans 'Paylike Payment' %} | {% trans 'SkyLearn LMS' %}{% endblock title %}
+
 {% block content %}
-<div class="container">
-	<center><h1>PayLike</h1></center>
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'payment_gateways' %}">{% trans 'Payment Gateways' %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans 'Paylike' %}</li>
+    </ol>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-credit-card"></i>
+        </div>
+        <div class="header-text">
+            <h1 class="header-title">{% trans 'Paylike' %}</h1>
+            <p class="header-subtitle">{% trans 'Simple, secure card payments - No account required' %}</p>
+        </div>
+    </div>
 </div>
+
+<!-- Messages -->
+{% include 'snippets/messages.html' %}
+
+<div class="payment-container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="payment-card">
+                <div class="payment-header">
+                    <div class="payment-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <h2>{% trans 'Paylike Checkout' %}</h2>
+                    <p>{% trans 'Enter your card details to complete payment' %}</p>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="order-summary">
+                    <div class="summary-item">
+                        <span>{% trans 'Course:' %}</span>
+                        <strong>{{ course.title|default:'Course Registration' }}</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>{% trans 'Amount:' %}</span>
+                        <strong class="amount">${{ amount|default:'0.00' }}</strong>
+                    </div>
+                </div>
+
+                <!-- Payment Form -->
+                <form action="" method="POST" id="payment-form">
+                    {% csrf_token %}
+                    
+                    <!-- Card Number -->
+                    <div class="form-group">
+                        <label for="card-number">
+                            <i class="fas fa-credit-card"></i> {% trans 'Card Number' %}
+                        </label>
+                        <div class="input-with-icon">
+                            <input type="text" 
+                                   id="card-number" 
+                                   class="form-control" 
+                                   placeholder="1234 5678 9012 3456"
+                                   maxlength="19"
+                                   autocomplete="cc-number">
+                            <span class="card-icons">
+                                <i class="fab fa-cc-visa"></i>
+                                <i class="fab fa-cc-mastercard"></i>
+                                <i class="fab fa-cc-amex"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Expiry Date & CVV -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="expiry-date">
+                                    <i class="fas fa-calendar-alt"></i> {% trans 'Expiry Date' %}
+                                </label>
+                                <input type="text" 
+                                       id="expiry-date" 
+                                       class="form-control" 
+                                       placeholder="MM/YY"
+                                       maxlength="5"
+                                       autocomplete="cc-exp">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cvv">
+                                    <i class="fas fa-lock"></i> {% trans 'CVV / CVC' %}
+                                </label>
+                                <input type="text" 
+                                       id="cvv" 
+                                       class="form-control" 
+                                       placeholder="123"
+                                       maxlength="4"
+                                       autocomplete="cc-csc">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cardholder Name -->
+                    <div class="form-group">
+                        <label for="card-name">
+                            <i class="fas fa-user"></i> {% trans 'Cardholder Name' %}
+                        </label>
+                        <input type="text" 
+                               id="card-name" 
+                               class="form-control" 
+                               placeholder="{% trans 'Name on card' %}"
+                               autocomplete="cc-name">
+                    </div>
+
+                    <!-- Email (for receipt) -->
+                    <div class="form-group">
+                        <label for="email">
+                            <i class="fas fa-envelope"></i> {% trans 'Email (for receipt)' %}
+                        </label>
+                        <input type="email" 
+                               id="email" 
+                               class="form-control" 
+                               placeholder="you@example.com"
+                               autocomplete="email">
+                    </div>
+
+                    <!-- Payment Button -->
+                    <button type="submit" class="btn-pay" id="pay-button">
+                        <i class="fas fa-lock"></i>
+                        <span>{% trans 'Pay Now' %}</span>
+                    </button>
+                </form>
+
+                <!-- Trust Badges -->
+                <div class="trust-badges">
+                    <div class="badge">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>{% trans 'PCI Compliant' %}</span>
+                    </div>
+                    <div class="badge">
+                        <i class="fas fa-lock"></i>
+                        <span>{% trans 'SSL Secure' %}</span>
+                    </div>
+                    <div class="badge">
+                        <i class="fas fa-clock"></i>
+                        <span>{% trans 'Instant Payment' %}</span>
+                    </div>
+                </div>
+
+                <!-- Features -->
+                <div class="features">
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>{% trans 'No Account Required' %}</strong>
+                            <p>{% trans 'Pay quickly without creating an account' %}</p>
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>{% trans 'Global Payments' %}</strong>
+                            <p>{% trans 'Accepted in over 100 currencies' %}</p>
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>{% trans '24/7 Support' %}</strong>
+                            <p>{% trans 'Dedicated customer support' %}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accepted Cards -->
+                <div class="accepted-cards">
+                    <p>{% trans 'We accept:' %}</p>
+                    <div class="card-icons-footer">
+                        <i class="fab fa-cc-visa fa-2x"></i>
+                        <i class="fab fa-cc-mastercard fa-2x"></i>
+                        <i class="fab fa-cc-amex fa-2x"></i>
+                        <i class="fab fa-cc-discover fa-2x"></i>
+                        <i class="fab fa-cc-jcb fa-2x"></i>
+                        <i class="fab fa-cc-diners-club fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #0052cc 0%, #00a3cc 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.8);
+}
+
+/* Payment Container */
+.payment-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* Payment Card */
+.payment-card {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+}
+
+.payment-header {
+    background: linear-gradient(135deg, #0052cc 0%, #00a3cc 100%);
+    padding: 1.5rem;
+    text-align: center;
+    color: white;
+}
+
+.payment-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+}
+
+.payment-header h2 {
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+}
+
+.payment-header p {
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+/* Order Summary */
+.order-summary {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.summary-item {
+    font-size: 0.75rem;
+}
+
+.summary-item span {
+    color: var(--gray-500);
+}
+
+.summary-item .amount {
+    font-size: 1rem;
+    color: var(--primary);
+}
+
+/* Form Styles */
+.form-group {
+    padding: 1rem 1.5rem 0;
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    margin-bottom: 0.5rem;
+}
+
+.form-group label i {
+    margin-right: 0.25rem;
+}
+
+.input-with-icon {
+    position: relative;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    transition: var(--transition-fast);
+    background: white;
+}
+
+[data-theme="dark"] .form-control {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--gray-200);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
+}
+
+.card-icons {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 0.25rem;
+}
+
+.card-icons i {
+    color: var(--gray-400);
+    font-size: 1.25rem;
+}
+
+/* Payment Button */
+.btn-pay {
+    width: calc(100% - 3rem);
+    margin: 1rem 1.5rem;
+    padding: 0.875rem;
+    background: linear-gradient(135deg, #0052cc 0%, #00a3cc 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-pay:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+}
+
+.btn-pay:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Trust Badges */
+.trust-badges {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 1rem 1.5rem;
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--gray-600);
+}
+
+.badge i {
+    font-size: 0.875rem;
+    color: var(--success);
+}
+
+/* Features */
+.features {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.feature:last-child {
+    margin-bottom: 0;
+}
+
+.feature i {
+    color: var(--success);
+    font-size: 1rem;
+    margin-top: 0.125rem;
+}
+
+.feature strong {
+    display: block;
+    font-size: 0.75rem;
+    margin-bottom: 0.125rem;
+    color: var(--gray-800);
+}
+
+.feature p {
+    font-size: 0.65rem;
+    color: var(--gray-500);
+    margin: 0;
+}
+
+/* Accepted Cards */
+.accepted-cards {
+    padding: 1rem 1.5rem;
+    text-align: center;
+}
+
+.accepted-cards p {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    margin-bottom: 0.5rem;
+}
+
+.card-icons-footer {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.card-icons-footer i {
+    color: var(--gray-400);
+    transition: var(--transition-fast);
+}
+
+.card-icons-footer i:hover {
+    color: var(--primary);
+}
+
+/* Validation Styles */
+.form-control.error {
+    border-color: var(--error);
+}
+
+.error-message {
+    color: var(--error);
+    font-size: 0.65rem;
+    margin-top: 0.25rem;
+    display: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .order-summary {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .trust-badges {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    
+    .card-icons-footer i {
+        font-size: 1.5rem;
+    }
+}
+</style>
+
+<script>
+// Format card number with spaces
+const cardNumberInput = document.getElementById('card-number');
+if (cardNumberInput) {
+    cardNumberInput.addEventListener('input', function(e) {
+        let value = this.value.replace(/\s/g, '');
+        if (value.length > 16) value = value.slice(0, 16);
+        let formatted = '';
+        for (let i = 0; i < value.length; i++) {
+            if (i > 0 && i % 4 === 0) formatted += ' ';
+            formatted += value[i];
+        }
+        this.value = formatted;
+        
+        // Detect card type
+        const firstDigit = value[0];
+        const icons = document.querySelectorAll('.card-icons i');
+        icons.forEach(icon => icon.style.opacity = '0.5');
+        
+        if (firstDigit === '4') {
+            document.querySelector('.fa-cc-visa')?.style.setProperty('opacity', '1');
+        } else if (firstDigit === '5') {
+            document.querySelector('.fa-cc-mastercard')?.style.setProperty('opacity', '1');
+        } else if (firstDigit === '3') {
+            document.querySelector('.fa-cc-amex')?.style.setProperty('opacity', '1');
+        }
+    });
+}
+
+// Format expiry date
+const expiryInput = document.getElementById('expiry-date');
+if (expiryInput) {
+    expiryInput.addEventListener('input', function(e) {
+        let value = this.value.replace('/', '');
+        if (value.length >= 2) {
+            this.value = value.slice(0, 2) + '/' + value.slice(2, 4);
+        }
+    });
+}
+
+// CVV validation
+const cvvInput = document.getElementById('cvv');
+if (cvvInput) {
+    cvvInput.addEventListener('input', function(e) {
+        let value = this.value.replace(/\D/g, '');
+        if (value.length > 4) value = value.slice(0, 4);
+        this.value = value;
+    });
+}
+
+// Form validation
+const form = document.getElementById('payment-form');
+const payBtn = document.getElementById('pay-button');
+
+function validateForm() {
+    const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+    const expiry = document.getElementById('expiry-date').value;
+    const cvv = document.getElementById('cvv').value;
+    const cardName = document.getElementById('card-name').value;
+    const email = document.getElementById('email').value;
+    
+    let isValid = true;
+    
+    // Card number validation
+    if (cardNumber.length !== 16) {
+        showError('card-number', '{% trans "Please enter a valid 16-digit card number" %}');
+        isValid = false;
+    } else {
+        clearError('card-number');
+    }
+    
+    // Expiry validation
+    if (!expiry.match(/^(0[1-9]|1[0-2])\/([0-9]{2})$/)) {
+        showError('expiry-date', '{% trans "Please enter a valid expiry date (MM/YY)" %}');
+        isValid = false;
+    } else {
+        clearError('expiry-date');
+    }
+    
+    // CVV validation
+    if (cvv.length < 3) {
+        showError('cvv', '{% trans "Please enter a valid CVV" %}');
+        isValid = false;
+    } else {
+        clearError('cvv');
+    }
+    
+    // Cardholder name validation
+    if (!cardName.trim()) {
+        showError('card-name', '{% trans "Please enter the cardholder name" %}');
+        isValid = false;
+    } else {
+        clearError('card-name');
+    }
+    
+    // Email validation
+    if (email && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        showError('email', '{% trans "Please enter a valid email address" %}');
+        isValid = false;
+    } else {
+        clearError('email');
+    }
+    
+    return isValid;
+}
+
+function showError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    field.classList.add('error');
+    
+    let errorDiv = field.parentElement.querySelector('.error-message');
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        field.parentElement.appendChild(errorDiv);
+    }
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+}
+
+function clearError(fieldId) {
+    const field = document.getElementById(fieldId);
+    field.classList.remove('error');
+    const errorDiv = field.parentElement.querySelector('.error-message');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+    }
+}
+
+// Form submission
+form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+        return;
+    }
+    
+    payBtn.disabled = true;
+    payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {% trans "Processing..." %}';
+    
+    // Simulate payment processing (replace with actual API call)
+    setTimeout(() => {
+        form.submit();
+    }, 2000);
+});
+</script>
+
 {% endblock content %}

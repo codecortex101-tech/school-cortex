@@ -1,40 +1,719 @@
 {% extends 'base.html' %}
 {% load i18n %}
-{% block title %}{{ title }} | {% trans 'Learning management system' %}{% endblock title %}
-{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}{% trans 'Upload Video' %} | {{ course.title }} | {% trans 'SkyLearn LMS' %}{% endblock title %}
 
 {% block content %}
 
-<nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
         <li class="breadcrumb-item"><a href="{% url 'programs' %}">{% trans 'Programs' %}</a></li>
         <li class="breadcrumb-item"><a href="{% url 'program_detail' course.program.id %}">{{ course.program }}</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'course_detail' course.slug %}">{{ course }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{% trans 'Video upload' %}</li>
+        <li class="breadcrumb-item"><a href="{% url 'course_detail' course.slug %}">{{ course.title|truncatechars:30 }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans 'Video Upload' %}</li>
     </ol>
 </nav>
-    
-<p class="title-1">{% trans 'Video upload for' %} {{ course|truncatechars:25 }}</p>
-<div class="title-line"></div><br>
 
-{% include 'snippets/messages.html' %}
-
-<div class="row">
-<div class="col-md-8 mx-auto">
-    <div class="card">
-    <p class="form-title">{% trans 'Video Upload Form' %}</p>
-    <div class="card-body">
-        <form action="" method="POST" enctype="multipart/form-data">{% csrf_token %}
-            {{ form|crispy }}
-            
-            <div class="form-group">
-                <button class="btn btn-primary" type="submit">{% trans 'Upload' %}</button>
-                <a class="btn btn-danger" href="{% url 'course_detail' course.slug %}" style="float: right;">{% trans 'Cancel' %}</a>
-            </div>
-        </form>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-video"></i>
+        </div>
+        <div class="header-text">
+            <h1 class="header-title">{% trans 'Upload Video Tutorial' %}</h1>
+            <p class="header-subtitle">{{ course.title }}</p>
+        </div>
     </div>
 </div>
+
+<!-- Messages -->
+{% include 'snippets/messages.html' %}
+
+<div class="upload-container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="upload-card">
+                <div class="card-header-custom">
+                    <div class="header-icon-custom">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h3 class="card-title">{% trans 'Upload Video' %}</h3>
+                    <p class="card-subtitle">{% trans 'Upload video tutorials for your students' %}</p>
+                </div>
+
+                <div class="card-body-custom">
+                    <form action="" method="POST" enctype="multipart/form-data" id="uploadForm">
+                        {% csrf_token %}
+                        
+                        <!-- Title Field -->
+                        <div class="form-group-modern">
+                            <label for="id_title">
+                                <i class="fas fa-heading"></i>
+                                {% trans 'Video Title' %}
+                                <span class="required">*</span>
+                            </label>
+                            <input type="text" 
+                                   name="title" 
+                                   id="id_title" 
+                                   class="form-control-modern" 
+                                   placeholder="{% trans 'Enter a descriptive title for this video' %}"
+                                   required>
+                            <div class="form-hint">
+                                <i class="fas fa-info-circle"></i>
+                                {% trans 'Use a clear title that describes the video content (e.g., "Chapter 1 - Introduction to Python")' %}
+                            </div>
+                        </div>
+
+                        <!-- Summary Field -->
+                        <div class="form-group-modern">
+                            <label for="id_summary">
+                                <i class="fas fa-align-left"></i>
+                                {% trans 'Video Summary' %}
+                            </label>
+                            <textarea name="summary" 
+                                      id="id_summary" 
+                                      class="form-control-modern" 
+                                      rows="3"
+                                      placeholder="{% trans 'Enter a brief description of what this video covers...' %}"></textarea>
+                            <div class="form-hint">
+                                <i class="fas fa-info-circle"></i>
+                                {% trans 'A good summary helps students understand what they will learn' %}
+                            </div>
+                        </div>
+
+                        <!-- Video Upload Area -->
+                        <div class="form-group-modern">
+                            <label>
+                                <i class="fas fa-video"></i>
+                                {% trans 'Select Video File' %}
+                                <span class="required">*</span>
+                            </label>
+                            <div class="dropzone-area" id="dropzoneArea">
+                                <div class="dropzone-content">
+                                    <div class="upload-icon">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </div>
+                                    <p class="dropzone-text">
+                                        <strong>{% trans 'Drag and drop your video here' %}</strong><br>
+                                        {% trans 'or click to browse' %}
+                                    </p>
+                                    <p class="dropzone-hint">
+                                        {% trans 'Supported formats:' %} MP4, MKV, WMV, 3GP, F4V, AVI, MP3
+                                    </p>
+                                </div>
+                                <input type="file" 
+                                       name="video" 
+                                       id="id_video" 
+                                       class="file-input" 
+                                       accept=".mp4,.mkv,.wmv,.3gp,.f4v,.avi,.mp3"
+                                       required>
+                            </div>
+                            
+                            <!-- Video Preview -->
+                            <div class="video-preview" id="videoPreview" style="display: none;">
+                                <div class="preview-card">
+                                    <div class="preview-thumbnail" id="videoThumbnail">
+                                        <i class="fas fa-play-circle"></i>
+                                    </div>
+                                    <div class="preview-info">
+                                        <span class="preview-name" id="previewName"></span>
+                                        <span class="preview-size" id="previewSize"></span>
+                                        <div class="preview-duration" id="previewDuration"></div>
+                                    </div>
+                                    <button type="button" class="preview-remove" id="removeFileBtn">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-hint">
+                                <i class="fas fa-shield-alt"></i>
+                                {% trans 'Maximum file size: 500MB. Recommended resolution: 720p or 1080p.' %}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn-submit" id="submitBtn">
+                                <i class="fas fa-upload"></i>
+                                <span>{% trans 'Upload Video' %}</span>
+                            </button>
+                            <a href="{% url 'course_detail' course.slug %}" class="btn-cancel">
+                                <i class="fas fa-times"></i>
+                                <span>{% trans 'Cancel' %}</span>
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Video Tips -->
+            <div class="info-card">
+                <div class="info-header">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>{% trans 'Video Upload Tips' %}</span>
+                </div>
+                <div class="info-body">
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> {% trans 'Keep videos under 15 minutes for better engagement' %}</li>
+                        <li><i class="fas fa-check-circle"></i> {% trans 'Use clear audio and good lighting' %}</li>
+                        <li><i class="fas fa-check-circle"></i> {% trans 'Add captions or subtitles when possible' %}</li>
+                        <li><i class="fas fa-check-circle"></i> {% trans 'Compress videos to reduce file size' %}</li>
+                        <li><i class="fas fa-check-circle"></i> {% trans 'Use consistent naming conventions' %}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.8);
+}
+
+/* Upload Container */
+.upload-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Upload Card */
+.upload-card {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.card-header-custom {
+    background: var(--gray-50);
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+    text-align: center;
+}
+
+[data-theme="dark"] .card-header-custom {
+    background: var(--gray-800);
+}
+
+.header-icon-custom {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.card-title {
+    margin: 0 0 0.25rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.card-subtitle {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.card-body-custom {
+    padding: 1.5rem;
+}
+
+/* Form Group Modern */
+.form-group-modern {
+    margin-bottom: 1.5rem;
+}
+
+.form-group-modern label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+.form-group-modern label i {
+    color: var(--primary);
+}
+
+.required {
+    color: var(--error);
+}
+
+.form-control-modern {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    transition: var(--transition-fast);
+    background: white;
+    resize: vertical;
+}
+
+[data-theme="dark"] .form-control-modern {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--gray-200);
+}
+
+.form-control-modern:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Dropzone Area */
+.dropzone-area {
+    position: relative;
+    border: 2px dashed var(--gray-300);
+    border-radius: var(--radius-xl);
+    background: var(--gray-50);
+    transition: var(--transition-fast);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.dropzone-area:hover {
+    border-color: var(--primary);
+    background: var(--primary-bg);
+}
+
+.dropzone-area.drag-over {
+    border-color: var(--primary);
+    background: var(--primary-bg);
+}
+
+.dropzone-content {
+    padding: 2rem;
+    text-align: center;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: var(--gray-400);
+    margin-bottom: 1rem;
+}
+
+.dropzone-text {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin-bottom: 0.5rem;
+}
+
+.dropzone-hint {
+    font-size: 0.7rem;
+    color: var(--gray-400);
+}
+
+.file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* Video Preview */
+.video-preview {
+    margin-top: 1rem;
+}
+
+.preview-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-200);
+}
+
+.preview-thumbnail {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.preview-info {
+    flex: 1;
+}
+
+.preview-name {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    word-break: break-all;
+}
+
+.preview-size {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--gray-500);
+}
+
+.preview-duration {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--primary);
+    margin-top: 0.25rem;
+}
+
+.preview-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--gray-400);
+    padding: 0.25rem;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fast);
+}
+
+.preview-remove:hover {
+    color: var(--error);
+    background: var(--error-bg);
+}
+
+/* Form Hint */
+.form-hint {
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--gray-400);
+}
+
+.form-hint i {
+    margin-right: 0.25rem;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.btn-submit, .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition-fast);
+    cursor: pointer;
+    border: none;
+}
+
+.btn-submit {
+    background: var(--success);
+    color: white;
+}
+
+.btn-submit:hover {
+    background: var(--success-dark);
+    transform: translateY(-2px);
+}
+
+.btn-cancel {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.btn-cancel:hover {
+    background: var(--gray-300);
+    transform: translateY(-2px);
+}
+
+/* Info Card */
+.info-card {
+    background: var(--info-bg);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    border-left: 3px solid var(--info);
+}
+
+.info-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--info);
+    margin-bottom: 0.5rem;
+}
+
+.info-body ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-body li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--gray-600);
+    margin-bottom: 0.5rem;
+}
+
+.info-body li i {
+    color: var(--success);
+    font-size: 0.6rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .upload-container {
+        padding: 0 1rem;
+    }
+    
+    .card-body-custom {
+        padding: 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn-submit, .btn-cancel {
+        justify-content: center;
+    }
+    
+    .dropzone-content {
+        padding: 1.5rem;
+    }
+    
+    .upload-icon {
+        font-size: 2rem;
+    }
+    
+    .preview-card {
+        flex-wrap: wrap;
+    }
+    
+    .preview-thumbnail {
+        width: 100%;
+        height: 100px;
+    }
+}
+</style>
+
+<script>
+// Drag and drop functionality
+const dropzone = document.getElementById('dropzoneArea');
+const fileInput = document.getElementById('id_video');
+const videoPreview = document.getElementById('videoPreview');
+const previewName = document.getElementById('previewName');
+const previewSize = document.getElementById('previewSize');
+const previewDuration = document.getElementById('previewDuration');
+const removeFileBtn = document.getElementById('removeFileBtn');
+
+// Prevent default drag behaviors
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, preventDefaults, false);
+    document.body.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+// Highlight drop zone on drag
+['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight() {
+    dropzone.classList.add('drag-over');
+}
+
+function unhighlight() {
+    dropzone.classList.remove('drag-over');
+}
+
+// Handle dropped files
+dropzone.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    fileInput.files = files;
+    handleFile(files[0]);
+}
+
+// Handle file input change
+fileInput.addEventListener('change', function() {
+    if (this.files.length > 0) {
+        handleFile(this.files[0]);
+    }
+});
+
+// Remove file button
+removeFileBtn.addEventListener('click', function() {
+    fileInput.value = '';
+    videoPreview.style.display = 'none';
+});
+
+function handleFile(file) {
+    // Validate file type
+    const allowedTypes = ['.mp4', '.mkv', '.wmv', '.3gp', '.f4v', '.avi', '.mp3'];
+    const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+    
+    if (!allowedTypes.includes(fileExt)) {
+        alert('{% trans "Invalid video format. Please upload a supported video format." %}');
+        fileInput.value = '';
+        return;
+    }
+    
+    // Validate file size (max 500MB)
+    if (file.size > 500 * 1024 * 1024) {
+        alert('{% trans "File size exceeds 500MB limit. Please compress your video." %}');
+        fileInput.value = '';
+        return;
+    }
+    
+    // Update preview
+    previewName.textContent = file.name;
+    previewSize.textContent = formatFileSize(file.size);
+    
+    // Get video duration (if it's a video file)
+    if (file.type.startsWith('video/')) {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = function() {
+            window.URL.revokeObjectURL(video.src);
+            const duration = formatDuration(video.duration);
+            previewDuration.textContent = duration;
+        };
+        video.src = URL.createObjectURL(file);
+    } else {
+        previewDuration.textContent = 'Audio file';
+    }
+    
+    videoPreview.style.display = 'block';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function formatDuration(seconds) {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    
+    if (hrs > 0) {
+        return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+}
+
+// Form submission with loading state
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    const title = document.getElementById('id_title').value;
+    const file = fileInput.files[0];
+    
+    if (!title) {
+        e.preventDefault();
+        alert('{% trans "Please enter a video title." %}');
+        return;
+    }
+    
+    if (!file) {
+        e.preventDefault();
+        alert('{% trans "Please select a video file to upload." %}');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>{% trans "Uploading..." %}</span>';
+});
+
+// Title validation
+document.getElementById('id_title').addEventListener('input', function() {
+    if (this.value.length > 200) {
+        this.value = this.value.substring(0, 200);
+    }
+});
+</script>
 
 {% endblock content %}
