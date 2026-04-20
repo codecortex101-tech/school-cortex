@@ -1,0 +1,761 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans 'Grade Results' %} | {% trans 'SkyLearn LMS' %}{% endblock title %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans 'Grade Results' %}</li>
+    </ol>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="header-text">
+            <h1 class="header-title">{% trans 'Grade Results' %}</h1>
+            <p class="header-subtitle">{{ student.level }} {% trans 'Result' %}</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-number">{{ total_first_and_second_semester_credit|default:'0' }}</div>
+            <div class="stat-label">{% trans 'Total Credits' %}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Messages -->
+{% include 'snippets/messages.html' %}
+
+<!-- GPA Summary Cards -->
+<div class="gpa-summary">
+    <div class="gpa-card first-semester">
+        <div class="gpa-icon">
+            <i class="fas fa-book-open"></i>
+        </div>
+        <div class="gpa-info">
+            <span class="gpa-label">{% trans 'First Semester GPA' %}</span>
+            <span class="gpa-value">
+                {% for result in results %}
+                    {% if result.semester == "First" %}{{ result.gpa }}{% endif %}
+                {% endfor %}
+            </span>
+        </div>
+    </div>
+    <div class="gpa-card second-semester">
+        <div class="gpa-icon">
+            <i class="fas fa-book"></i>
+        </div>
+        <div class="gpa-info">
+            <span class="gpa-label">{% trans 'Second Semester GPA' %}</span>
+            <span class="gpa-value">
+                {% for result in results %}
+                    {% if result.semester == "Second" %}{{ result.gpa }}{% endif %}
+                {% endfor %}
+            </span>
+        </div>
+    </div>
+    <div class="gpa-card cgpa">
+        <div class="gpa-icon">
+            <i class="fas fa-star"></i>
+        </div>
+        <div class="gpa-info">
+            <span class="gpa-label">{% trans 'CGPA' %}</span>
+            <span class="gpa-value">{{ previousCGPA|default:'0.00' }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- First Semester Section -->
+<div class="semester-section">
+    <div class="section-header">
+        <div class="section-title">
+            <i class="fas fa-calendar-alt"></i>
+            <span>{% trans 'First Semester Results' %}</span>
+        </div>
+        <div class="section-credit">
+            <i class="fas fa-clock"></i>
+            {% trans 'Total Credits:' %} {{ total_first_semester_credit }}
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th class="col-sno">#</th>
+                    <th class="col-code">{% trans 'Course Code' %}</th>
+                    <th class="col-title">{% trans 'Course Title' %}</th>
+                    <th class="col-credit">{% trans 'Credits' %}</th>
+                    <th class="col-grade">{% trans 'Grade' %}</th>
+                    <th class="col-points">{% trans 'Points' %}</th>
+                    <th class="col-comment">{% trans 'Status' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in courses %}
+                {% if course.course.semester == "First" %}
+                <tr class="course-row">
+                    <td data-label="#"> {{ forloop.counter }} </td>
+                    <td data-label="{% trans 'Course Code' %}">
+                        <span class="course-code">{{ course.course.code }}</span>
+                    </td>
+                    <td data-label="{% trans 'Course Title' %}">
+                        <a href="{{ course.course.get_absolute_url }}" class="course-link">
+                            {{ course.course.title }}
+                        </a>
+                    </td>
+                    <td data-label="{% trans 'Credits' %}">
+                        <span class="credit-badge">{{ course.course.credit }}</span>
+                    </td>
+                    <td data-label="{% trans 'Grade' %}">
+                        <span class="grade-badge {% if course.grade == 'F' %}grade-f{% elif course.grade == 'A' %}grade-a{% elif course.grade == 'B' %}grade-b{% elif course.grade == 'C' %}grade-c{% elif course.grade == 'D' %}grade-d{% endif %}">
+                            {{ course.grade }}
+                        </span>
+                    </td>
+                    <td data-label="{% trans 'Points' %}">
+                        <span class="points-badge">{{ course.point }}</span>
+                    </td>
+                    <td data-label="{% trans 'Status' %}">
+                        {% if course.comment == 'PASS' %}
+                        <span class="status-pass">
+                            <i class="fas fa-check-circle"></i> {% trans 'PASS' %}
+                        </span>
+                        {% elif course.comment == 'FAIL' %}
+                        <span class="status-fail">
+                            <i class="fas fa-exclamation-circle"></i> {% trans 'FAIL' %}
+                        </span>
+                        {% else %}
+                        <span class="status-pending">
+                            <i class="fas fa-clock"></i> {% trans 'Pending' %}
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+                
+                <!-- Semester Summary -->
+                {% for result in results %}
+                {% if result.semester == "First" %}
+                <tr class="summary-row">
+                    <td colspan="4" class="summary-label">{% trans 'First Semester Summary' %}</td>
+                    <td colspan="3" class="summary-value">
+                        <div class="summary-details">
+                            <span>{% trans 'Total Credits:' %} <strong>{{ total_first_semester_credit }}</strong></span>
+                            <span>{% trans 'GPA:' %} <strong class="gpa-highlight">{{ result.gpa }}</strong></span>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Second Semester Section -->
+<div class="semester-section">
+    <div class="section-header">
+        <div class="section-title">
+            <i class="fas fa-calendar-alt"></i>
+            <span>{% trans 'Second Semester Results' %}</span>
+        </div>
+        <div class="section-credit">
+            <i class="fas fa-clock"></i>
+            {% trans 'Total Credits:' %} {{ total_sec_semester_credit }}
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th class="col-sno">#</th>
+                    <th class="col-code">{% trans 'Course Code' %}</th>
+                    <th class="col-title">{% trans 'Course Title' %}</th>
+                    <th class="col-credit">{% trans 'Credits' %}</th>
+                    <th class="col-grade">{% trans 'Grade' %}</th>
+                    <th class="col-points">{% trans 'Points' %}</th>
+                    <th class="col-comment">{% trans 'Status' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in courses %}
+                {% if course.course.semester == "Second" %}
+                <tr class="course-row">
+                    <td data-label="#"> {{ forloop.counter }} </td>
+                    <td data-label="{% trans 'Course Code' %}">
+                        <span class="course-code">{{ course.course.code }}</span>
+                    </td>
+                    <td data-label="{% trans 'Course Title' %}">
+                        <a href="{{ course.course.get_absolute_url }}" class="course-link">
+                            {{ course.course.title }}
+                        </a>
+                    </td>
+                    <td data-label="{% trans 'Credits' %}">
+                        <span class="credit-badge">{{ course.course.credit }}</span>
+                    </td>
+                    <td data-label="{% trans 'Grade' %}">
+                        <span class="grade-badge {% if course.grade == 'F' %}grade-f{% elif course.grade == 'A' %}grade-a{% elif course.grade == 'B' %}grade-b{% elif course.grade == 'C' %}grade-c{% elif course.grade == 'D' %}grade-d{% endif %}">
+                            {{ course.grade }}
+                        </span>
+                    </td>
+                    <td data-label="{% trans 'Points' %}">
+                        <span class="points-badge">{{ course.point }}</span>
+                    </td>
+                    <td data-label="{% trans 'Status' %}">
+                        {% if course.comment == 'PASS' %}
+                        <span class="status-pass">
+                            <i class="fas fa-check-circle"></i> {% trans 'PASS' %}
+                        </span>
+                        {% elif course.comment == 'FAIL' %}
+                        <span class="status-fail">
+                            <i class="fas fa-exclamation-circle"></i> {% trans 'FAIL' %}
+                        </span>
+                        {% else %}
+                        <span class="status-pending">
+                            <i class="fas fa-clock"></i> {% trans 'Pending' %}
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+                
+                <!-- Semester Summary -->
+                {% for result in results %}
+                {% if result.semester == "Second" %}
+                <tr class="summary-row">
+                    <td colspan="4" class="summary-label">{% trans 'Second Semester Summary' %}</td>
+                    <td colspan="3" class="summary-value">
+                        <div class="summary-details">
+                            <span>{% trans 'Total Credits:' %} <strong>{{ total_sec_semester_credit }}</strong></span>
+                            <span>{% trans 'GPA:' %} <strong class="gpa-highlight">{{ result.gpa }}</strong></span>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Overall Summary -->
+<div class="overall-summary">
+    <div class="summary-card">
+        <div class="summary-icon">
+            <i class="fas fa-chart-pie"></i>
+        </div>
+        <div class="summary-content">
+            <h3>{% trans 'Academic Summary' %}</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="item-label">{% trans 'Total Credits Earned' %}</span>
+                    <span class="item-value">{{ total_first_and_second_semester_credit }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="item-label">{% trans 'Overall CGPA' %}</span>
+                    <span class="item-value cgpa-value">{{ previousCGPA|default:'0.00' }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="item-label">{% trans 'Academic Standing' %}</span>
+                    <span class="item-value standing">
+                        {% if previousCGPA|default:0 >= 3.5 %}
+                        <i class="fas fa-trophy"></i> {% trans 'Excellent' %}
+                        {% elif previousCGPA|default:0 >= 3.0 %}
+                        <i class="fas fa-star"></i> {% trans 'Very Good' %}
+                        {% elif previousCGPA|default:0 >= 2.5 %}
+                        <i class="fas fa-thumbs-up"></i> {% trans 'Good' %}
+                        {% elif previousCGPA|default:0 >= 2.0 %}
+                        <i class="fas fa-check"></i> {% trans 'Satisfactory' %}
+                        {% else %}
+                        <i class="fas fa-exclamation-triangle"></i> {% trans 'Needs Improvement' %}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.header-stats {
+    background: rgba(255,255,255,0.2);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.8);
+}
+
+/* GPA Summary Cards */
+.gpa-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.gpa-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    transition: var(--transition-fast);
+}
+
+.gpa-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.gpa-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.first-semester .gpa-icon {
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+
+.second-semester .gpa-icon {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.cgpa .gpa-icon {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.gpa-info {
+    flex: 1;
+}
+
+.gpa-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--gray-500);
+}
+
+.gpa-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+/* Semester Section */
+.semester-section {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.section-title i {
+    color: var(--primary);
+}
+
+.section-credit {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    background: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+}
+
+/* Results Table */
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.results-table thead th {
+    padding: 0.875rem 1rem;
+    background: var(--gray-50);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-600);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.results-table tbody td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: middle;
+}
+
+.results-table tbody tr:hover {
+    background: var(--gray-50);
+}
+
+/* Column Widths */
+.col-sno { width: 5%; }
+.col-code { width: 12%; }
+.col-title { width: 40%; }
+.col-credit { width: 8%; }
+.col-grade { width: 8%; }
+.col-points { width: 8%; }
+.col-comment { width: 12%; }
+
+/* Course Code */
+.course-code {
+    font-family: monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--primary-bg);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+/* Course Link */
+.course-link {
+    color: var(--gray-800);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: var(--transition-fast);
+}
+
+.course-link:hover {
+    color: var(--primary);
+}
+
+/* Credit Badge */
+.credit-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: var(--gray-100);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+/* Grade Badges */
+.grade-badge {
+    display: inline-block;
+    min-width: 45px;
+    text-align: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.grade-a {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.grade-b {
+    background: var(--info-bg);
+    color: var(--info);
+}
+
+.grade-c {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.grade-d {
+    background: var(--warning-bg);
+    color: #d97706;
+}
+
+.grade-f {
+    background: var(--error-bg);
+    color: var(--error);
+}
+
+/* Points Badge */
+.points-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: var(--gray-100);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+/* Status Badges */
+.status-pass, .status-fail, .status-pending {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.status-pass {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.status-fail {
+    background: var(--error-bg);
+    color: var(--error);
+}
+
+.status-pending {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+/* Summary Row */
+.summary-row {
+    background: var(--gray-50);
+}
+
+.summary-label {
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+.summary-value {
+    text-align: right;
+}
+
+.summary-details {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1.5rem;
+    font-size: 0.75rem;
+}
+
+.gpa-highlight {
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+/* Overall Summary */
+.overall-summary {
+    margin-top: 1.5rem;
+}
+
+.summary-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-xl);
+    color: white;
+}
+
+.summary-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.summary-content {
+    flex: 1;
+}
+
+.summary-content h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+}
+
+.summary-grid {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.item-label {
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
+
+.item-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.cgpa-value {
+    font-size: 1.5rem;
+}
+
+.standing {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .gpa-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .results-table thead {
+        display: none;
+    }
+    
+    .results-table tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+    }
+    
+    .results-table tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .results-table tbody td:last-child {
+        border-bottom: none;
+    }
+    
+    .results-table tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: 0.7rem;
+        color: var(--gray-600);
+        min-width: 100px;
+    }
+    
+    .summary-row td {
+        display: block !important;
+        text-align: center !important;
+    }
+    
+    .summary-details {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .summary-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .summary-grid {
+        justify-content: center;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+}
+</style>
+
+{% endblock %}

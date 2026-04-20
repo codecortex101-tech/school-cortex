@@ -1,0 +1,864 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans 'Assessment Results' %} | {% trans 'SkyLearn LMS' %}{% endblock title %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans 'Assessment Results' %}</li>
+    </ol>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-chart-bar"></i>
+        </div>
+        <div class="header-text">
+            <h1 class="header-title">{% trans 'Assessment Results' %}</h1>
+            <p class="header-subtitle">{{ student.level }} {% trans 'Academic Performance' %}</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-number">{{ courses|length }}</div>
+            <div class="stat-label">{% trans 'Courses' %}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Messages -->
+{% include 'snippets/messages.html' %}
+
+<!-- Performance Summary Cards -->
+<div class="performance-summary">
+    <div class="perf-card">
+        <div class="perf-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="perf-info">
+            <span class="perf-label">{% trans 'Average Score' %}</span>
+            <span class="perf-value" id="avgScore">--</span>
+        </div>
+    </div>
+    <div class="perf-card">
+        <div class="perf-icon">
+            <i class="fas fa-trophy"></i>
+        </div>
+        <div class="perf-info">
+            <span class="perf-label">{% trans 'Highest Score' %}</span>
+            <span class="perf-value" id="highestScore">--</span>
+        </div>
+    </div>
+    <div class="perf-card">
+        <div class="perf-icon">
+            <i class="fas fa-star"></i>
+        </div>
+        <div class="perf-info">
+            <span class="perf-label">{% trans 'Passed Courses' %}</span>
+            <span class="perf-value" id="passedCount">--</span>
+        </div>
+    </div>
+    <div class="perf-card">
+        <div class="perf-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="perf-info">
+            <span class="perf-label">{% trans 'Failed Courses' %}</span>
+            <span class="perf-value" id="failedCount">--</span>
+        </div>
+    </div>
+</div>
+
+<!-- First Semester Section -->
+<div class="semester-section">
+    <div class="section-header">
+        <div class="section-title">
+            <i class="fas fa-calendar-alt"></i>
+            <span>{% trans 'First Semester Results' %}</span>
+        </div>
+        <div class="section-stats">
+            <span class="stat-badge" id="firstSemesterAvg">--</span>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="assessment-table" id="firstSemesterTable">
+            <thead>
+                <tr>
+                    <th class="col-sno">#</th>
+                    <th class="col-code">{% trans 'Course Code' %}</th>
+                    <th class="col-title">{% trans 'Course Title' %}</th>
+                    <th class="col-credit">{% trans 'Credits' %}</th>
+                    <th class="col-assignment">{% trans 'Assignment' %}</th>
+                    <th class="col-mid">{% trans 'Mid Exam' %}</th>
+                    <th class="col-quiz">{% trans 'Quiz' %}</th>
+                    <th class="col-attendance">{% trans 'Attendance' %}</th>
+                    <th class="col-final">{% trans 'Final Exam' %}</th>
+                    <th class="col-total">{% trans 'Total' %}</th>
+                    <th class="col-status">{% trans 'Status' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in courses %}
+                {% if course.course.semester == "First" %}
+                <tr class="course-row" data-total="{{ course.total }}">
+                    <td data-label="#"> {{ forloop.counter }} </td>
+                    <td data-label="{% trans 'Course Code' %}">
+                        <span class="course-code">{{ course.course.code }}</span>
+                    </td>
+                    <td data-label="{% trans 'Course Title' %}">
+                        <a href="{{ course.course.get_absolute_url }}" class="course-link">
+                            {{ course.course.title }}
+                        </a>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </div>
+                    </td>
+                    <td data-label="{% trans 'Credits' %}">
+                        <span class="credit-badge">{{ course.course.credit }}</span>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </td>
+                    <td data-label="{% trans 'Assignment' %}">
+                        <div class="score-cell">
+                            <span class="score-value {% if course.assignment < 40 %}score-low{% elif course.assignment < 70 %}score-medium{% else %}score-high{% endif %}">
+                                {{ course.assignment|default:'0' }}
+                            </span>
+                            <span class="score-max">/100</span>
+                        </div>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </td>
+                    <td data-label="{% trans 'Mid Exam' %}">
+                        <div class="score-cell">
+                            <span class="score-value {% if course.mid_exam < 40 %}score-low{% elif course.mid_exam < 70 %}score-medium{% else %}score-high{% endif %}">
+                                {{ course.mid_exam|default:'0' }}
+                            </span>
+                            <span class="score-max">/100</span>
+                        </div>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </td>
+                    <td data-label="{% trans 'Quiz' %}">
+                        <div class="score-cell">
+                            <span class="score-value {% if course.quiz < 40 %}score-low{% elif course.quiz < 70 %}score-medium{% else %}score-high{% endif %}">
+                                {{ course.quiz|default:'0' }}
+                            </span>
+                            <span class="score-max">/100</span>
+                        </div>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </td>
+                    <td data-label="{% trans 'Attendance' %}">
+                        <div class="score-cell">
+                            <span class="score-value {% if course.attendance < 40 %}score-low{% elif course.attendance < 70 %}score-medium{% else %}score-high{% endif %}">
+                                {{ course.attendance|default:'0' }}
+                            </span>
+                            <span class="score-max">/100</span>
+                        </div>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </td>
+                    <td data-label="{% trans 'Final Exam' %}">
+                        <div class="score-cell">
+                            <span class="score-value {% if course.final_exam < 40 %}score-low{% elif course.final_exam < 70 %}score-medium{% else %}score-high{% endif %}">
+                                {{ course.final_exam|default:'0' }}
+                            </span>
+                            <span class="score-max">/100</span>
+                        </div>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </td>
+                    <td data-label="{% trans 'Total' %}">
+                        <div class="total-score {% if course.total >= 45 %}total-pass{% else %}total-fail{% endif %}">
+                            <span class="total-value">{{ course.total|default:'0' }}</span>
+                            <span class="total-max">/100</span>
+                        </div>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </td>
+                    <td data-label="{% trans 'Status' %}">
+                        {% if course.total >= 45 %}
+                        <span class="status-pass">
+                            <i class="fas fa-check-circle"></i> {% trans 'PASS' %}
+                        </span>
+                        {% else %}
+                        <span class="status-fail">
+                            <i class="fas fa-exclamation-circle"></i> {% trans 'FAIL' %}
+                        </span>
+                        {% endif %}
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </div>
+                    </a>
+                    </td>
+                </div>
+                 </a>
+                 </div>
+                 </a>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+         </div>
+         </a>
+         </div>
+         </a>
+        </table>
+    </div>
+</div>
+
+<!-- Second Semester Section -->
+<div class="semester-section">
+    <div class="section-header">
+        <div class="section-title">
+            <i class="fas fa-calendar-alt"></i>
+            <span>{% trans 'Second Semester Results' %}</span>
+        </div>
+        <div class="section-stats">
+            <span class="stat-badge" id="secondSemesterAvg">--</span>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="assessment-table" id="secondSemesterTable">
+            <thead>
+                <tr>
+                    <th class="col-sno">#</th>
+                    <th class="col-code">{% trans 'Course Code' %}</th>
+                    <th class="col-title">{% trans 'Course Title' %}</th>
+                    <th class="col-credit">{% trans 'Credits' %}</th>
+                    <th class="col-assignment">{% trans 'Assignment' %}</th>
+                    <th class="col-mid">{% trans 'Mid Exam' %}</th>
+                    <th class="col-quiz">{% trans 'Quiz' %}</th>
+                    <th class="col-attendance">{% trans 'Attendance' %}</th>
+                    <th class="col-final">{% trans 'Final Exam' %}</th>
+                    <th class="col-total">{% trans 'Total' %}</th>
+                    <th class="col-status">{% trans 'Status' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in courses %}
+                {% if course.course.semester == "Second" %}
+                <tr class="course-row" data-total="{{ course.total }}">
+                    <td data-label="#"> {{ forloop.counter }} </td>
+                    <td data-label="{% trans 'Course Code' %}">
+                        <span class="course-code">{{ course.course.code }}</span>
+                    </div>
+                     </a>
+                     </div>
+                     </a>
+                    </td>
+                    <td data-label="{% trans 'Course Title' %}">
+                        <a href="{{ course.course.get_absolute_url }}" class="course-link">
+                            {{ course.course.title }}
+                        </a>
+                    </div>
+                     </a>
+                     </div>
+                     </a>
+                    </div>
+                     </a>
+                    </td>
+                    <td data-label="{% trans 'Credits' %}">
+                        <span class="credit-badge">{{ course.course.credit }}</span>
+                    </div>
+                     </a>
+                     </div>
+                     </a>
+                    </div>
+                     </a>
+                    </td>
+                    <td data-label="{% trans 'Assignment' %}">
+                        <div class="score-cell">
+                            <span class="score-value {% if course.assignment < 40 %}score-low{% elif course.assignment < 70 %}score-medium{% else %}score-high{% endif %}">
+                                {{ course.assignment|default:'0' }}
+                            </span>
+                            <span class="score-max">/100</span>
+                        </div>
+                    </div>
+                     </a>
+                     </div>
+                     </a>
+                    </div>
+                     </a>
+                    </td>
+                    <td data-label="{% trans 'Mid Exam' %}">
+                        <div class="score-cell">
+                            <span class="score-value {% if course.mid_exam < 40 %}score-low{% elif course.mid_exam < 70 %}score-medium{% else %}score-high{% endif %}">
+                                {{ course.mid_exam|default:'0' }}
+                            </span>
+                            <span class="score-max">/100</span>
+                        </div>
+                    </div>
+                     </a>
+                     </div>
+                     </a>
+                    </div>
+                     </a>
+                    </td>
+                    <td data-label="{% trans 'Quiz' %}">
+                        <div class="score-cell">
+                            <span class="score-value {% if course.quiz < 40 %}score-low{% elif course.quiz < 70 %}score-medium{% else %}score-high{% endif %}">
+                                {{ course.quiz|default:'0' }}
+                            </span>
+                            <span class="score-max">/100</span>
+                        </div>
+                    </div>
+                     </a>
+                     </div>
+                     </a>
+                    </div>
+                     </a>
+                    </td>
+                    <td data-label="{% trans 'Attendance' %}">
+                        <div class="score-cell">
+                            <span class="score-value {% if course.attendance < 40 %}score-low{% elif course.attendance < 70 %}score-medium{% else %}score-high{% endif %}">
+                                {{ course.attendance|default:'0' }}
+                            </span>
+                            <span class="score-max">/100</span>
+                        </div>
+                    </div>
+                     </a>
+                     </div>
+                     </a>
+                    </div>
+                     </a>
+                    </td>
+                    <td data-label="{% trans 'Final Exam' %}">
+                        <div class="score-cell">
+                            <span class="score-value {% if course.final_exam < 40 %}score-low{% elif course.final_exam < 70 %}score-medium{% else %}score-high{% endif %}">
+                                {{ course.final_exam|default:'0' }}
+                            </span>
+                            <span class="score-max">/100</span>
+                        </div>
+                    </div>
+                     </a>
+                     </div>
+                     </a>
+                    </div>
+                     </a>
+                    </td>
+                    <td data-label="{% trans 'Total' %}">
+                        <div class="total-score {% if course.total >= 45 %}total-pass{% else %}total-fail{% endif %}">
+                            <span class="total-value">{{ course.total|default:'0' }}</span>
+                            <span class="total-max">/100</span>
+                        </div>
+                    </div>
+                     </a>
+                     </div>
+                     </a>
+                    </div>
+                     </a>
+                    </td>
+                    <td data-label="{% trans 'Status' %}">
+                        {% if course.total >= 45 %}
+                        <span class="status-pass">
+                            <i class="fas fa-check-circle"></i> {% trans 'PASS' %}
+                        </span>
+                        {% else %}
+                        <span class="status-fail">
+                            <i class="fas fa-exclamation-circle"></i> {% trans 'FAIL' %}
+                        </span>
+                        {% endif %}
+                    </div>
+                     </a>
+                     </div>
+                     </a>
+                    </div>
+                     </a>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.header-stats {
+    background: rgba(255,255,255,0.2);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.8);
+}
+
+/* Performance Summary Cards */
+.performance-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.perf-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    transition: var(--transition-fast);
+}
+
+.perf-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.perf-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    background: var(--primary-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: var(--primary);
+}
+
+.perf-info {
+    flex: 1;
+}
+
+.perf-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--gray-500);
+}
+
+.perf-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+/* Semester Section */
+.semester-section {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.section-title i {
+    color: var(--primary);
+}
+
+.stat-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--success-bg);
+    color: var(--success);
+    border-radius: 20px;
+}
+
+/* Assessment Table */
+.assessment-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.assessment-table thead th {
+    padding: 0.875rem 0.75rem;
+    background: var(--gray-50);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-600);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.assessment-table tbody td {
+    padding: 0.875rem 0.75rem;
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: middle;
+}
+
+.assessment-table tbody tr:hover {
+    background: var(--gray-50);
+}
+
+/* Column Widths */
+.col-sno { width: 4%; }
+.col-code { width: 10%; }
+.col-title { width: 25%; }
+.col-credit { width: 6%; }
+.col-assignment { width: 8%; }
+.col-mid { width: 8%; }
+.col-quiz { width: 8%; }
+.col-attendance { width: 8%; }
+.col-final { width: 8%; }
+.col-total { width: 8%; }
+.col-status { width: 8%; }
+
+/* Course Code */
+.course-code {
+    font-family: monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--primary-bg);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+/* Course Link */
+.course-link {
+    color: var(--gray-800);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: var(--transition-fast);
+}
+
+.course-link:hover {
+    color: var(--primary);
+}
+
+/* Credit Badge */
+.credit-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: var(--gray-100);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+/* Score Cell */
+.score-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.score-value {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.score-low {
+    color: var(--error);
+}
+
+.score-medium {
+    color: var(--warning);
+}
+
+.score-high {
+    color: var(--success);
+}
+
+.score-max {
+    font-size: 0.6rem;
+    color: var(--gray-400);
+}
+
+/* Total Score */
+.total-score {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 20px;
+    font-weight: 700;
+}
+
+.total-pass {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.total-fail {
+    background: var(--error-bg);
+    color: var(--error);
+}
+
+.total-value {
+    font-size: 0.875rem;
+}
+
+.total-max {
+    font-size: 0.6rem;
+    opacity: 0.7;
+}
+
+/* Status Badges */
+.status-pass, .status-fail {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.status-pass {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.status-fail {
+    background: var(--error-bg);
+    color: var(--error);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .assessment-table {
+        font-size: 0.8rem;
+    }
+    
+    .assessment-table thead th {
+        padding: 0.5rem;
+        font-size: 0.6rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .performance-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .assessment-table thead {
+        display: none;
+    }
+    
+    .assessment-table tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+    }
+    
+    .assessment-table tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .assessment-table tbody td:last-child {
+        border-bottom: none;
+    }
+    
+    .assessment-table tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: 0.7rem;
+        color: var(--gray-600);
+        min-width: 100px;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .score-cell {
+        justify-content: flex-end;
+    }
+    
+    .total-score {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .performance-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+
+<script>
+// Calculate statistics on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculate for first semester
+    const firstSemesterRows = document.querySelectorAll('#firstSemesterTable .course-row');
+    const firstSemesterScores = [];
+    let firstSemesterPassed = 0;
+    let firstSemesterFailed = 0;
+    
+    firstSemesterRows.forEach(row => {
+        const total = parseInt(row.getAttribute('data-total')) || 0;
+        firstSemesterScores.push(total);
+        if (total >= 45) {
+            firstSemesterPassed++;
+        } else {
+            firstSemesterFailed++;
+        }
+    });
+    
+    const firstSemesterAvg = firstSemesterScores.length > 0 
+        ? (firstSemesterScores.reduce((a, b) => a + b, 0) / firstSemesterScores.length).toFixed(1)
+        : 0;
+    
+    document.getElementById('firstSemesterAvg').textContent = firstSemesterAvg + '%';
+    
+    // Calculate for second semester
+    const secondSemesterRows = document.querySelectorAll('#secondSemesterTable .course-row');
+    const secondSemesterScores = [];
+    let secondSemesterPassed = 0;
+    let secondSemesterFailed = 0;
+    
+    secondSemesterRows.forEach(row => {
+        const total = parseInt(row.getAttribute('data-total')) || 0;
+        secondSemesterScores.push(total);
+        if (total >= 45) {
+            secondSemesterPassed++;
+        } else {
+            secondSemesterFailed++;
+        }
+    });
+    
+    const secondSemesterAvg = secondSemesterScores.length > 0 
+        ? (secondSemesterScores.reduce((a, b) => a + b, 0) / secondSemesterScores.length).toFixed(1)
+        : 0;
+    
+    document.getElementById('secondSemesterAvg').textContent = secondSemesterAvg + '%';
+    
+    // Calculate overall statistics
+    const allScores = [...firstSemesterScores, ...secondSemesterScores];
+    const avgScore = allScores.length > 0 
+        ? (allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(1)
+        : 0;
+    const highestScore = allScores.length > 0 ? Math.max(...allScores) : 0;
+    const totalPassed = firstSemesterPassed + secondSemesterPassed;
+    const totalFailed = firstSemesterFailed + secondSemesterFailed;
+    
+    document.getElementById('avgScore').textContent = avgScore + '%';
+    document.getElementById('highestScore').textContent = highestScore;
+    document.getElementById('passedCount').textContent = totalPassed;
+    document.getElementById('failedCount').textContent = totalFailed;
+});
+</script>
+
+{% endblock %}

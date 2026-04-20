@@ -1,0 +1,736 @@
+{% load static %}
+{% load i18n %}
+
+<div id="side-nav" class="modern-sidebar">
+    <div class="sidebar-header">
+        <div class="logo-section">
+            <a href="/" class="logo-link">
+                <img src="{% static 'img/brand.svg' %}" alt="SkyLearn" class="logo-img">
+            </a>
+            <button class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+        
+        <div class="user-profile">
+            <div class="user-avatar-sidebar">
+                <img src="{{ request.user.picture.url }}" alt="{{ request.user.get_full_name }}">
+                <span class="user-status online"></span>
+            </div>
+            <div class="user-info-sidebar">
+                <h6>{{ request.user.get_full_name|default:request.user.username }}</h6>
+                <span class="user-role-badge">{{ request.user.get_user_role }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-nav">
+        {% url 'home' as hom %} 
+        {% url 'dashboard' as dash %} 
+        {% url 'profile' as prof %}
+        {% url 'lecturer_list' as lec %}
+        {% url 'student_list' as stu %} 
+        {% url 'course_allocation_view' as cav %}
+        {% url 'programs' as pro %} 
+        {% url 'session_list' as sess %} 
+        {% url 'semester_list' as sem %}
+        {% url 'add_score' as ascore %} 
+        {% url 'grade_results' as vr %}
+        {% url 'ass_results' as ar %}
+        {% url 'course_registration' as cr %} 
+        {% url 'edit_profile' as ep %} 
+        {% url 'change_password' as cp %}
+        {% url 'quiz_progress' as qpr %} 
+        {% url 'quiz_marking' as qce %} 
+        {% url 'user_course_list' as ucl %}
+        {% url 'admin_panel' as admin_p %}
+
+        <ul class="nav-menu">
+            <!-- Main Section -->
+            {% if request.user.is_superuser %}
+            <li class="nav-item {% if request.path == dash %}active{% endif %}">
+                <a href="{% url 'dashboard' %}" class="nav-link">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>{% trans 'Dashboard' %}</span>
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="nav-item {% if request.path == hom %}active{% endif %}">
+                <a href="{% url 'home' %}" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    <span>{% trans 'Home' %}</span>
+                </a>
+            </li>
+            
+            <li class="nav-item {% if request.path == prof %}active{% endif %}">
+                <a href="{% url 'profile' %}" class="nav-link">
+                    <i class="fas fa-user"></i>
+                    <span>{% trans 'Profile' %}</span>
+                </a>
+            </li>
+
+            <!-- Administration Section -->
+            {% if request.user.is_superuser %}
+            <li class="nav-divider">
+                <span class="nav-label">{% trans 'Administration' %}</span>
+            </li>
+            
+            <li class="nav-item {% if request.path == admin_p %}active{% endif %}">
+                <a href="{% url 'admin_panel' %}" class="nav-link">
+                    <i class="fas fa-user-tie"></i>
+                    <span>{% trans 'Admin Panel' %}</span>
+                </a>
+            </li>
+            
+            <li class="nav-item {% if request.path == lec %}active{% endif %}">
+                <a href="{% url 'lecturer_list' %}" class="nav-link">
+                    <i class="fas fa-chalkboard-user"></i>
+                    <span>{% trans 'Lecturers' %}</span>
+                </a>
+            </li>
+            
+            <li class="nav-item {% if request.path == stu %}active{% endif %}">
+                <a href="{% url 'student_list' %}" class="nav-link">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>{% trans 'Students' %}</span>
+                </a>
+            </li>
+            {% endif %}
+
+            <!-- Academic Section -->
+            <li class="nav-divider">
+                <span class="nav-label">{% trans 'Academic' %}</span>
+            </li>
+
+            {% if request.user.is_lecturer or request.user.is_student %}
+            <li class="nav-item {% if request.path == ucl %}active{% endif %}">
+                <a href="{% url 'user_course_list' %}" class="nav-link">
+                    <i class="fas fa-book"></i>
+                    <span>{% trans 'My Courses' %}</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user.is_superuser or request.user.is_lecturer %}
+            <li class="nav-item {% if request.path == pro %}active{% endif %}">
+                <a href="{% url 'programs' %}" class="nav-link">
+                    <i class="fas fa-book-open"></i>
+                    <span>{% trans 'Programs & Courses' %}</span>
+                </a>
+            </li>
+            {% endif %}
+
+            <!-- Assessment Section -->
+            <li class="nav-divider">
+                <span class="nav-label">{% trans 'Assessment' %}</span>
+            </li>
+
+            {% if request.user.is_lecturer %}
+            <li class="nav-item {% if request.path == ascore %}active{% endif %}">
+                <a href="{% url 'add_score' %}" class="nav-link">
+                    <i class="fas fa-table"></i>
+                    <span>{% trans 'Manage Scores' %}</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user.is_superuser or request.user.is_lecturer %}
+            <li class="nav-item {% if request.path == qce %}active{% endif %}">
+                <a href="{% url 'quiz_marking' %}" class="nav-link">
+                    <i class="fas fa-check-double"></i>
+                    <span>{% trans 'Complete Exams' %}</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user.is_student %}
+            <li class="nav-item {% if request.path == qpr %}active{% endif %}">
+                <a href="{% url 'quiz_progress' %}" class="nav-link">
+                    <i class="fas fa-chart-line"></i>
+                    <span>{% trans 'Quiz Progress' %}</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.path == vr %}active{% endif %}">
+                <a href="{% url 'grade_results' %}" class="nav-link">
+                    <i class="fas fa-spell-check"></i>
+                    <span>{% trans 'Grade Results' %}</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.path == ar %}active{% endif %}">
+                <a href="{% url 'ass_results' %}" class="nav-link">
+                    <i class="fas fa-list-ol"></i>
+                    <span>{% trans 'Assessment Results' %}</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.path == cr %}active{% endif %}">
+                <a href="{% url 'course_registration' %}" class="nav-link">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>{% trans 'Add/Drop Course' %}</span>
+                </a>
+            </li>
+            {% endif %}
+
+            <!-- System Management Section -->
+            {% if request.user.is_superuser %}
+            <li class="nav-divider">
+                <span class="nav-label">{% trans 'System Management' %}</span>
+            </li>
+            
+            <li class="nav-item {% if request.path == qpr %}active{% endif %}">
+                <a href="{% url 'quiz_progress' %}" class="nav-link">
+                    <i class="fas fa-chart-simple"></i>
+                    <span>{% trans 'Quiz Progress' %}</span>
+                </a>
+            </li>
+            
+            <li class="nav-item {% if request.path == cav %}active{% endif %}">
+                <a href="{% url 'course_allocation_view' %}" class="nav-link">
+                    <i class="fas fa-tasks"></i>
+                    <span>{% trans 'Course Allocation' %}</span>
+                </a>
+            </li>
+            
+            <li class="nav-item {% if request.path == sess %}active{% endif %}">
+                <a href="{% url 'session_list' %}" class="nav-link">
+                    <i class="fas fa-calendar-week"></i>
+                    <span>{% trans 'Manage Sessions' %}</span>
+                </a>
+            </li>
+            
+            <li class="nav-item {% if request.path == sem %}active{% endif %}">
+                <a href="{% url 'semester_list' %}" class="nav-link">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>{% trans 'Manage Semesters' %}</span>
+                </a>
+            </li>
+            {% endif %}
+
+            <!-- Settings Section -->
+            <li class="nav-divider">
+                <span class="nav-label">{% trans 'Settings' %}</span>
+            </li>
+            
+            <li class="nav-item {% if request.path == ep %}active{% endif %}">
+                <a href="{% url 'edit_profile' %}" class="nav-link">
+                    <i class="fas fa-sliders-h"></i>
+                    <span>{% trans 'Account Settings' %}</span>
+                </a>
+            </li>
+            
+            <li class="nav-item {% if request.path == cp %}active{% endif %}">
+                <a href="{% url 'change_password' %}" class="nav-link">
+                    <i class="fas fa-key"></i>
+                    <span>{% trans 'Change Password' %}</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="sidebar-footer">
+        <!-- Language Switcher -->
+        <div class="language-switcher-sidebar">
+            <i class="fas fa-globe"></i>
+            <form action="{% url 'set_language' %}" method="post" id="lang-form" class="lang-form">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{{ redirect_to }}">
+                <select name="language" id="lang-select" class="lang-select">
+                    {% get_current_language as LANGUAGE_CODE %}
+                    {% get_available_languages as LANGUAGES %}
+                    {% get_language_info_list for LANGUAGES as languages %}
+                    {% for language in languages %}
+                        <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
+                            {{ language.name_local }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+
+        <!-- Footer Info -->
+        <div class="footer-info">
+            <p class="copyright">
+                <i class="far fa-copyright"></i> {% now "Y" %} SkyLearn
+            </p>
+            <div class="footer-links">
+                <a href="#">{% trans 'Privacy' %}</a>
+                <span class="separator">•</span>
+                <a href="#">{% trans 'Terms' %}</a>
+            </div>
+        </div>
+
+        <!-- Star Button -->
+        <a href="https://github.com/SkyCascade/SkyLearn" class="star-btn" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-star"></i>
+            <span>{% trans 'Star on GitHub' %}</span>
+        </a>
+    </div>
+</div>
+
+<!-- Modern Sidebar Styles -->
+<style>
+/* Modern Sidebar Styles */
+.modern-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    transition: var(--transition-base);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+[data-theme="dark"] .modern-sidebar {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+[data-theme="dark"] .sidebar-header {
+    border-bottom-color: var(--gray-800);
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.logo-img {
+    max-width: 160px;
+    height: auto;
+}
+
+.sidebar-toggle-btn {
+    background: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--gray-600);
+    transition: var(--transition-fast);
+}
+
+.sidebar-toggle-btn:hover {
+    background: var(--gray-200);
+    color: var(--primary);
+}
+
+/* User Profile in Sidebar */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--gray-100);
+    border-radius: var(--radius-lg);
+    transition: var(--transition-fast);
+}
+
+[data-theme="dark"] .user-profile {
+    background: var(--gray-800);
+}
+
+.user-avatar-sidebar {
+    position: relative;
+    width: 48px;
+    height: 48px;
+}
+
+.user-avatar-sidebar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary-light);
+}
+
+.user-status {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.user-status.online {
+    background: var(--success);
+}
+
+.user-info-sidebar h6 {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+[data-theme="dark"] .user-info-sidebar h6 {
+    color: var(--gray-200);
+}
+
+.user-role-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    background: var(--primary-bg);
+    color: var(--primary);
+    border-radius: 20px;
+    display: inline-block;
+    margin-top: 4px;
+}
+
+/* Navigation Menu */
+.sidebar-nav {
+    flex: 1;
+    padding: 1rem 0;
+    overflow-y: auto;
+}
+
+.nav-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-divider {
+    padding: 0.5rem 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.nav-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gray-500);
+}
+
+.nav-item {
+    margin: 0.25rem 0;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    color: var(--gray-700);
+    text-decoration: none;
+    transition: var(--transition-fast);
+    position: relative;
+    font-size: 0.875rem;
+}
+
+[data-theme="dark"] .nav-link {
+    color: var(--gray-300);
+}
+
+.nav-link i {
+    width: 24px;
+    font-size: 1.125rem;
+    text-align: center;
+    transition: var(--transition-fast);
+}
+
+.nav-link:hover {
+    background: var(--gray-100);
+    color: var(--primary);
+}
+
+[data-theme="dark"] .nav-link:hover {
+    background: var(--gray-800);
+}
+
+.nav-link:hover i {
+    transform: translateX(4px);
+}
+
+.nav-item.active .nav-link {
+    background: var(--primary-bg);
+    color: var(--primary);
+    border-right: 3px solid var(--primary);
+}
+
+[data-theme="dark"] .nav-item.active .nav-link {
+    background: rgba(79, 70, 229, 0.1);
+}
+
+.nav-item.active .nav-link i {
+    color: var(--primary);
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+[data-theme="dark"] .sidebar-footer {
+    border-top-color: var(--gray-800);
+}
+
+.language-switcher-sidebar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: var(--gray-100);
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+}
+
+[data-theme="dark"] .language-switcher-sidebar {
+    background: var(--gray-800);
+}
+
+.language-switcher-sidebar i {
+    color: var(--gray-500);
+    font-size: 1rem;
+}
+
+.lang-form {
+    flex: 1;
+}
+
+.lang-select {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--gray-700);
+    font-size: 0.875rem;
+    cursor: pointer;
+    outline: none;
+}
+
+[data-theme="dark"] .lang-select {
+    color: var(--gray-300);
+}
+
+.footer-info {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.copyright {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    margin: 0 0 0.25rem 0;
+}
+
+.footer-links {
+    font-size: 0.7rem;
+}
+
+.footer-links a {
+    color: var(--gray-500);
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+.footer-links a:hover {
+    color: var(--primary);
+}
+
+.separator {
+    margin: 0 0.25rem;
+    color: var(--gray-400);
+}
+
+.star-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--gray-100);
+    border-radius: var(--radius-md);
+    color: var(--gray-700);
+    text-decoration: none;
+    font-size: 0.75rem;
+    transition: var(--transition-fast);
+}
+
+[data-theme="dark"] .star-btn {
+    background: var(--gray-800);
+    color: var(--gray-300);
+}
+
+.star-btn:hover {
+    background: var(--warning);
+    color: #fff;
+}
+
+.star-btn:hover i {
+    animation: starPulse 0.5s ease;
+}
+
+@keyframes starPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* Sidebar Collapsed State */
+body.sidebar-collapsed .modern-sidebar {
+    width: 80px;
+}
+
+body.sidebar-collapsed .sidebar-header {
+    padding: 1rem;
+}
+
+body.sidebar-collapsed .logo-img {
+    width: 40px;
+}
+
+body.sidebar-collapsed .user-profile,
+body.sidebar-collapsed .user-info-sidebar,
+body.sidebar-collapsed .nav-label,
+body.sidebar-collapsed .nav-link span,
+body.sidebar-collapsed .language-switcher-sidebar span,
+body.sidebar-collapsed .footer-info,
+body.sidebar-collapsed .star-btn span {
+    display: none;
+}
+
+body.sidebar-collapsed .nav-link {
+    justify-content: center;
+    padding: 0.75rem;
+}
+
+body.sidebar-collapsed .nav-link i {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+body.sidebar-collapsed .language-switcher-sidebar {
+    justify-content: center;
+}
+
+body.sidebar-collapsed .star-btn {
+    padding: 0.5rem;
+}
+
+body.sidebar-collapsed .star-btn i {
+    margin: 0;
+}
+
+/* Scrollbar */
+.modern-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.modern-sidebar::-webkit-scrollbar-track {
+    background: var(--gray-100);
+}
+
+.modern-sidebar::-webkit-scrollbar-thumb {
+    background: var(--gray-400);
+    border-radius: 4px;
+}
+
+.modern-sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .modern-sidebar {
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-xl);
+    }
+    
+    body.sidebar-open .modern-sidebar {
+        transform: translateX(0);
+    }
+    
+    body.sidebar-collapsed .modern-sidebar {
+        width: 280px;
+        transform: translateX(-100%);
+    }
+    
+    body.sidebar-open .modern-sidebar .logo-img {
+        display: inline;
+    }
+    
+    .sidebar-toggle-btn {
+        display: none;
+    }
+}
+
+/* Animation for sidebar */
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+body.sidebar-open .modern-sidebar {
+    animation: slideIn 0.3s ease;
+}
+</style>
+
+<script>
+// Language switcher
+document.getElementById("lang-select")?.addEventListener("change", function() {
+    document.getElementById("lang-form").submit();
+});
+
+// Save sidebar state
+function saveSidebarState() {
+    const isCollapsed = document.body.classList.contains('sidebar-collapsed');
+    localStorage.setItem('sidebarCollapsed', isCollapsed);
+}
+
+// Load sidebar state
+function loadSidebarState() {
+    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (isCollapsed) {
+        document.body.classList.add('sidebar-collapsed');
+    }
+}
+
+// Toggle sidebar function
+window.toggleSidebar = function() {
+    if (window.innerWidth <= 768) {
+        document.body.classList.toggle('sidebar-open');
+    } else {
+        document.body.classList.toggle('sidebar-collapsed');
+        saveSidebarState();
+    }
+};
+
+// Load state on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadSidebarState();
+    
+    // Close sidebar on mobile when clicking outside
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+            const sidebar = document.getElementById('side-nav');
+            const toggleBtn = document.querySelector('.toggle-btn');
+            if (sidebar && !sidebar.contains(e.target) && !toggleBtn?.contains(e.target)) {
+                document.body.classList.remove('sidebar-open');
+            }
+        }
+    });
+});
+</script>

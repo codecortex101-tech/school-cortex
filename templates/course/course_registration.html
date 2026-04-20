@@ -1,0 +1,907 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% trans 'Course Registration' %} | {% trans 'SkyLearn LMS' %}{% endblock title %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans 'Course Registration' %}</li>
+    </ol>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-plus-circle"></i>
+        </div>
+        <div class="header-text">
+            <h1 class="header-title">{% trans 'Course Registration' %}</h1>
+            <p class="header-subtitle">{% trans 'Add or drop courses for the current semester' %}</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-number">{{ total_registered_credit|default:'0' }}</div>
+            <div class="stat-label">{% trans 'Registered Credits' %}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Messages -->
+{% include 'snippets/messages.html' %}
+
+{% if current_semester %}
+
+    {% if is_calender_on == False %}
+    <!-- Calendar Off Alert -->
+    <div class="alert-calendar-off">
+        <div class="alert-icon">
+            <i class="fas fa-calendar-times"></i>
+        </div>
+        <div class="alert-content">
+            <h3>{% trans 'Registration Calendar is Closed' %}</h3>
+            <p>{% trans 'Course registration is currently not available. Please check the university calendar for registration dates.' %}</p>
+        </div>
+    </div>
+    {% else %}
+
+        {% if not all_courses_are_registered %}
+        <!-- Course Add Section -->
+        <div class="registration-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>{% trans 'Add Courses' %}</span>
+                </div>
+                <div class="credit-summary">
+                    <span class="credit-badge">
+                        <i class="fas fa-clock"></i>
+                        {% trans 'Total Credits:' %} {{ total_sec_semester_credit|add:total_first_semester_credit }}
+                    </span>
+                </div>
+            </div>
+
+            <form action="{% url 'course_registration' %}" method="POST" id="courseAddForm">
+                {% csrf_token %}
+                
+                <div class="action-bar">
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save"></i> {% trans 'Register Selected Courses' %}
+                    </button>
+                </div>
+
+                <!-- First Semester Courses -->
+                <div class="semester-card">
+                    <div class="semester-header">
+                        <i class="fas fa-book-open"></i>
+                        <h3>{% trans 'First Semester' %}</h3>
+                        <span class="semester-credits">{{ total_first_semester_credit }} {% trans 'credits' %}</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="courses-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-checkbox">
+                                        <input type="checkbox" id="selectAllFirst" class="select-all-checkbox">
+                                    </th>
+                                    <th class="col-code">{% trans 'Course Code' %}</th>
+                                    <th class="col-title">{% trans 'Course Title' %}</th>
+                                    <th class="col-credit">{% trans 'Credits' %}</th>
+                                    <th class="col-year">{% trans 'Year' %}</th>
+                                    <th class="col-type">{% trans 'Type' %}</th>
+                                    <th class="col-group">{% trans 'Group' %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in courses %}
+                                {% if course.semester == "First" %}
+                                <tr class="course-row">
+                                    <td class="col-checkbox">
+                                        <label class="checkbox-container">
+                                            <input type="checkbox" name="{{ course.pk }}" value="{{ course.courseUnit }}" class="course-checkbox first-semester">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                    <td class="col-code">
+                                        <span class="course-code">{{ course.code }}</span>
+                                    </td>
+                                    <td class="col-title">
+                                        <div class="course-info">
+                                            <span class="course-title">{{ course.title }}</span>
+                                            {% if course.summary %}
+                                            <span class="course-summary">{{ course.summary|truncatechars:60 }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="col-credit">
+                                        <span class="credit-badge">{{ course.credit }}</span>
+                                    </td>
+                                    <td class="col-year">{{ course.year }}</td>
+                                    <td class="col-type">
+                                        {% if course.is_elective %}
+                                        <span class="type-badge elective">{% trans 'Elective' %}</span>
+                                        {% else %}
+                                        <span class="type-badge core">{% trans 'Core' %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="col-group">-</td>
+                                </tr>
+                                {% endif %}
+                                {% empty %}
+                                <tr class="empty-row">
+                                    <td colspan="7">
+                                        <div class="empty-message">
+                                            <i class="fas fa-info-circle"></i>
+                                            {% trans 'No courses available for first semester.' %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="total-row">
+                                    <td colspan="3" class="text-end"><strong>{% trans 'First Semester Total:' %}</strong></td>
+                                    <td><strong>{{ total_first_semester_credit }}</strong></td>
+                                    <td colspan="3"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Second Semester Courses -->
+                <div class="semester-card">
+                    <div class="semester-header">
+                        <i class="fas fa-book"></i>
+                        <h3>{% trans 'Second Semester' %}</h3>
+                        <span class="semester-credits">{{ total_sec_semester_credit }} {% trans 'credits' %}</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="courses-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-checkbox">
+                                        <input type="checkbox" id="selectAllSecond" class="select-all-checkbox">
+                                    </th>
+                                    <th class="col-code">{% trans 'Course Code' %}</th>
+                                    <th class="col-title">{% trans 'Course Title' %}</th>
+                                    <th class="col-credit">{% trans 'Credits' %}</th>
+                                    <th class="col-year">{% trans 'Year' %}</th>
+                                    <th class="col-type">{% trans 'Type' %}</th>
+                                    <th class="col-group">{% trans 'Group' %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in courses %}
+                                {% if course.semester == "Second" %}
+                                <tr class="course-row">
+                                    <td class="col-checkbox">
+                                        <label class="checkbox-container">
+                                            <input type="checkbox" name="{{ course.pk }}" value="{{ course.courseUnit }}" class="course-checkbox second-semester">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                    <td class="col-code">
+                                        <span class="course-code">{{ course.code }}</span>
+                                    </td>
+                                    <td class="col-title">
+                                        <div class="course-info">
+                                            <span class="course-title">{{ course.title }}</span>
+                                            {% if course.summary %}
+                                            <span class="course-summary">{{ course.summary|truncatechars:60 }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="col-credit">
+                                        <span class="credit-badge">{{ course.credit }}</span>
+                                    </td>
+                                    <td class="col-year">{{ course.year }}</td>
+                                    <td class="col-type">
+                                        {% if course.is_elective %}
+                                        <span class="type-badge elective">{% trans 'Elective' %}</span>
+                                        {% else %}
+                                        <span class="type-badge core">{% trans 'Core' %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="col-group">-</td>
+                                </tr>
+                                {% endif %}
+                                {% empty %}
+                                <tr class="empty-row">
+                                    <td colspan="7">
+                                        <div class="empty-message">
+                                            <i class="fas fa-info-circle"></i>
+                                            {% trans 'No courses available for second semester.' %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="total-row">
+                                    <td colspan="3" class="text-end"><strong>{% trans 'Second Semester Total:' %}</strong></td>
+                                    <td><strong>{{ total_sec_semester_credit }}</strong></td>
+                                    <td colspan="3"></td>
+                                </tr>
+                                <tr class="grand-total-row">
+                                    <td colspan="3" class="text-end"><strong>{% trans 'Registered Credits:' %}</strong></td>
+                                    <td><strong id="totalRegisteredCredits">{{ total_registered_credit }}</strong></td>
+                                    <td colspan="3"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        <br><br>
+
+        {% if not no_course_is_registered %}
+        <!-- Course Drop Section -->
+        <div class="registration-section drop-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-minus-circle"></i>
+                    <span>{% trans 'Drop Courses' %}</span>
+                </div>
+                <div class="credit-summary">
+                    <span class="credit-badge warning">
+                        <i class="fas fa-clock"></i>
+                        {% trans 'Registered:' %} {{ total_registered_credit }} {% trans 'credits' %}
+                    </span>
+                </div>
+            </div>
+
+            <form action="{% url 'course_drop' %}" method="POST" id="courseDropForm">
+                {% csrf_token %}
+                
+                <div class="action-bar">
+                    <button type="submit" class="btn-drop" onclick="return confirm('{% trans "Are you sure you want to drop selected courses?" %}')">
+                        <i class="fas fa-trash-alt"></i> {% trans 'Drop Selected Courses' %}
+                    </button>
+                </div>
+
+                <div class="semester-card">
+                    <div class="semester-header">
+                        <i class="fas fa-user-graduate"></i>
+                        <h3>{% trans 'Your Registered Courses' %}</h3>
+                        <span class="semester-credits">{{ student.level|default:'Student' }}</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="courses-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-checkbox">
+                                        <input type="checkbox" id="selectAllDrop" class="select-all-checkbox">
+                                    </th>
+                                    <th class="col-code">{% trans 'Course Code' %}</th>
+                                    <th class="col-title">{% trans 'Course Title' %}</th>
+                                    <th class="col-credit">{% trans 'Credits' %}</th>
+                                    <th class="col-year">{% trans 'Year' %}</th>
+                                    <th class="col-type">{% trans 'Type' %}</th>
+                                    <th class="col-group">{% trans 'Group' %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in registered_courses %}
+                                <tr class="course-row">
+                                    <td class="col-checkbox">
+                                        <label class="checkbox-container">
+                                            <input type="checkbox" name="course_ids" value="{{ course.id }}" class="drop-checkbox">
+                                            <span class="checkmark"></span>
+                                        </label>
+                                    </td>
+                                    <td class="col-code">
+                                        <span class="course-code">{{ course.code }}</span>
+                                    </td>
+                                    <td class="col-title">
+                                        <div class="course-info">
+                                            <span class="course-title">{{ course.title }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="col-credit">
+                                        <span class="credit-badge">{{ course.credit }}</span>
+                                    </td>
+                                    <td class="col-year">{{ course.year }}</td>
+                                    <td class="col-type">
+                                        {% if course.is_elective %}
+                                        <span class="type-badge elective">{% trans 'Elective' %}</span>
+                                        {% else %}
+                                        <span class="type-badge core">{% trans 'Core' %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="col-group">-</td>
+                                </tr>
+                                {% empty %}
+                                <tr class="empty-row">
+                                    <td colspan="7">
+                                        <div class="empty-message">
+                                            <i class="fas fa-info-circle"></i>
+                                            {% trans 'No courses registered yet.' %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="total-row">
+                                    <td colspan="3" class="text-end"><strong>{% trans 'Total Credits:' %}</strong></td>
+                                    <td><strong>{{ total_registered_credit }}</strong></td>
+                                    <td colspan="3"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </form>
+
+            <div class="print-section">
+                <a class="btn-print" href="{% url 'course_registration_form' %}" target="_blank">
+                    <i class="fas fa-print"></i> {% trans 'Print Registration Form' %}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+    {% endif %}
+
+{% else %}
+<div class="alert-info">
+    <i class="fas fa-info-circle"></i>
+    <p>{% trans 'No active semester found. Please contact the administrator.' %}</p>
+</div>
+{% endif %}
+
+<style>
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.header-stats {
+    background: rgba(255,255,255,0.2);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.8);
+}
+
+/* Alert Calendar Off */
+.alert-calendar-off {
+    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.alert-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: white;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-content h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+}
+
+.alert-content p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.9);
+}
+
+/* Registration Section */
+.registration-section {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.drop-section {
+    border-color: var(--warning);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.section-title i {
+    color: var(--primary);
+}
+
+.drop-section .section-title i {
+    color: var(--warning);
+}
+
+.credit-summary {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.credit-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--success-bg);
+    color: var(--success);
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.credit-badge.warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+/* Action Bar */
+.action-bar {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.btn-submit, .btn-drop {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-submit {
+    background: var(--success);
+    color: white;
+}
+
+.btn-submit:hover {
+    background: var(--success-dark);
+    transform: translateY(-2px);
+}
+
+.btn-drop {
+    background: var(--error);
+    color: white;
+}
+
+.btn-drop:hover {
+    background: var(--error-dark);
+    transform: translateY(-2px);
+}
+
+/* Semester Card */
+.semester-card {
+    margin: 1.5rem;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.semester-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--primary-bg);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.semester-header i {
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.semester-header h3 {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    flex: 1;
+}
+
+.semester-credits {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    background: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+}
+
+/* Courses Table */
+.courses-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.courses-table th {
+    padding: 0.75rem 1rem;
+    background: var(--gray-50);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-600);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.courses-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: middle;
+}
+
+.courses-table tr:hover {
+    background: var(--gray-50);
+}
+
+/* Column Widths */
+.col-checkbox { width: 5%; }
+.col-code { width: 12%; }
+.col-title { width: 45%; }
+.col-credit { width: 8%; }
+.col-year { width: 10%; }
+.col-type { width: 10%; }
+.col-group { width: 10%; }
+
+/* Course Code */
+.course-code {
+    font-family: monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--primary-bg);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+/* Course Info */
+.course-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.course-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-800);
+}
+
+.course-summary {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+}
+
+/* Credit Badge */
+.credit-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: var(--gray-100);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gray-700);
+}
+
+/* Type Badge */
+.type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.type-badge.core {
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+
+.type-badge.elective {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+/* Checkbox */
+.checkbox-container {
+    display: block;
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    width: 18px;
+    height: 18px;
+}
+
+.checkbox-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 18px;
+    width: 18px;
+    background: white;
+    border: 2px solid var(--gray-300);
+    border-radius: 4px;
+    transition: var(--transition-fast);
+}
+
+.checkbox-container:hover input ~ .checkmark {
+    border-color: var(--primary);
+}
+
+.checkbox-container input:checked ~ .checkmark {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+    display: block;
+    left: 5px;
+    top: 1px;
+    width: 4px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Total Rows */
+.total-row, .grand-total-row {
+    background: var(--gray-50);
+    font-weight: 600;
+}
+
+.grand-total-row {
+    background: var(--primary-bg);
+}
+
+/* Empty Message */
+.empty-message {
+    text-align: center;
+    padding: 1rem;
+    color: var(--gray-500);
+}
+
+.empty-message i {
+    margin-right: 0.5rem;
+}
+
+/* Print Section */
+.print-section {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--gray-200);
+    text-align: center;
+}
+
+.btn-print {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    background: var(--gray-200);
+    color: var(--gray-700);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: var(--transition-fast);
+}
+
+.btn-print:hover {
+    background: var(--gray-300);
+}
+
+/* Alert Info */
+.alert-info {
+    background: var(--info-bg);
+    color: var(--info);
+    padding: 1rem;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .courses-table thead {
+        display: none;
+    }
+    
+    .courses-table tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+    }
+    
+    .courses-table tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .courses-table tbody td:last-child {
+        border-bottom: none;
+    }
+    
+    .courses-table tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: var(--gray-600);
+        min-width: 100px;
+    }
+    
+    .semester-card {
+        margin: 1rem;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+    
+    .alert-calendar-off {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+
+<script>
+// Select All functionality
+document.getElementById('selectAllFirst')?.addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.first-semester');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+});
+
+document.getElementById('selectAllSecond')?.addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.second-semester');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+});
+
+document.getElementById('selectAllDrop')?.addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.drop-checkbox');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+});
+
+// Update total credits dynamically
+function updateTotalCredits() {
+    let total = 0;
+    const checkboxes = document.querySelectorAll('.course-checkbox:checked');
+    checkboxes.forEach(cb => {
+        total += parseInt(cb.value) || 0;
+    });
+    const totalElement = document.getElementById('totalRegisteredCredits');
+    if (totalElement) {
+        totalElement.textContent = total;
+    }
+}
+
+document.querySelectorAll('.course-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateTotalCredits);
+});
+
+// Form submission confirmation
+document.getElementById('courseDropForm')?.addEventListener('submit', function(e) {
+    const checked = document.querySelectorAll('.drop-checkbox:checked').length;
+    if (checked === 0) {
+        e.preventDefault();
+        alert('{% trans "Please select at least one course to drop." %}');
+    }
+});
+
+document.getElementById('courseAddForm')?.addEventListener('submit', function(e) {
+    const checked = document.querySelectorAll('.course-checkbox:checked').length;
+    if (checked === 0) {
+        e.preventDefault();
+        alert('{% trans "Please select at least one course to register." %}');
+    }
+});
+</script>
+
+{% endblock content %}

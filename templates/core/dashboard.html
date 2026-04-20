@@ -1,0 +1,775 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans 'Dashboard' %} | {% trans 'SkyLearn LMS' %}{% endblock %}
+
+{% block header %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Moment.js for date handling -->
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+<style>
+    /* Dashboard Modern Styles */
+    .dashboard-stats {
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: var(--card-bg, white);
+        border-radius: var(--radius-xl);
+        padding: 1.5rem;
+        transition: var(--transition-base);
+        border: 1px solid var(--gray-200);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    [data-theme="dark"] .stat-card {
+        background: var(--gray-800);
+        border-color: var(--gray-700);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-icon.students { background: rgba(79, 70, 229, 0.1); color: #4f46e5; }
+    .stat-icon.lecturers { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .stat-icon.admins { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .stat-icon.courses { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--gray-800);
+        margin-bottom: 0.25rem;
+    }
+    
+    [data-theme="dark"] .stat-value {
+        color: var(--gray-200);
+    }
+    
+    .stat-label {
+        color: var(--gray-500);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .stat-trend {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .trend-up { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .trend-down { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    
+    .chart-card {
+        background: var(--card-bg, white);
+        border-radius: var(--radius-xl);
+        padding: 1.5rem;
+        border: 1px solid var(--gray-200);
+        transition: var(--transition-base);
+        height: 100%;
+    }
+    
+    [data-theme="dark"] .chart-card {
+        background: var(--gray-800);
+        border-color: var(--gray-700);
+    }
+    
+    .chart-card:hover {
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--gray-200);
+    }
+    
+    .chart-header h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .expand-btn {
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: var(--radius-md);
+        transition: var(--transition-fast);
+    }
+    
+    .expand-btn:hover {
+        background: var(--gray-200);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    
+    /* Activity Feed */
+    .activity-feed {
+        background: var(--card-bg, white);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--gray-200);
+        height: 100%;
+    }
+    
+    .feed-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .feed-header h5 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .feed-items {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 0.5rem;
+    }
+    
+    .feed-item {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        border-radius: var(--radius-lg);
+        transition: var(--transition-fast);
+        cursor: pointer;
+    }
+    
+    .feed-item:hover {
+        background: var(--gray-100);
+    }
+    
+    .feed-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .feed-icon.info { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .feed-icon.success { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .feed-icon.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    
+    .feed-content {
+        flex: 1;
+    }
+    
+    .feed-message {
+        color: var(--gray-700);
+        margin-bottom: 0.25rem;
+        font-size: 0.875rem;
+    }
+    
+    .feed-time {
+        font-size: 0.7rem;
+        color: var(--gray-400);
+    }
+    
+    /* Welcome Banner */
+    .welcome-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: var(--radius-2xl);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .welcome-banner::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .welcome-banner h2 {
+        color: white;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+    
+    .welcome-banner p {
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 0;
+    }
+    
+    .date-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        color: white;
+        font-size: 0.875rem;
+    }
+    
+    /* Quick Actions */
+    .quick-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+    }
+    
+    .quick-action-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--radius-lg);
+        background: var(--card-bg, white);
+        border: 1px solid var(--gray-200);
+        color: var(--gray-700);
+        text-decoration: none;
+        transition: var(--transition-fast);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .quick-action-btn:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    /* Demographics Section */
+    .demographics-section {
+        background: var(--card-bg, white);
+        border-radius: var(--radius-xl);
+        padding: 1.5rem;
+        margin-top: 2rem;
+        border: 1px solid var(--gray-200);
+    }
+    
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .demographic-card {
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .demographic-chart {
+        height: 200px;
+        margin-bottom: 1rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .stat-card { padding: 1rem; }
+        .stat-value { font-size: 1.5rem; }
+        .chart-container { height: 250px; }
+        .welcome-banner { padding: 1.5rem; }
+        .quick-action-btn { padding: 0.5rem 1rem; font-size: 0.875rem; }
+    }
+    
+    @media (max-width: 576px) {
+        .stat-icon { width: 36px; height: 36px; font-size: 1rem; }
+        .stat-value { font-size: 1.25rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h2>{% trans 'Welcome back,' %} {{ request.user.get_full_name|default:request.user.username }}! 👋</h2>
+            <p>{% trans "Here's what's happening with your learning platform today." %}</p>
+        </div>
+        <div class="date-badge">
+            <i class="fas fa-calendar-alt me-2"></i>
+            <span id="currentDate"></span>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+    {% if request.user.is_superuser %}
+    <a href="{% url 'student_list' %}" class="quick-action-btn">
+        <i class="fas fa-user-plus"></i> {% trans 'Manage Students' %}
+    </a>
+    <a href="{% url 'lecturer_list' %}" class="quick-action-btn">
+        <i class="fas fa-chalkboard-user"></i> {% trans 'Manage Lecturers' %}
+    </a>
+    <a href="{% url 'course_allocation_view' %}" class="quick-action-btn">
+        <i class="fas fa-tasks"></i> {% trans 'Allocate Course' %}
+    </a>
+    <a href="{% url 'programs' %}" class="quick-action-btn">
+        <i class="fas fa-book-open"></i> {% trans 'Manage Courses' %}
+    </a>
+    {% endif %}
+    {% if request.user.is_lecturer %}
+    <a href="{% url 'add_score' %}" class="quick-action-btn">
+        <i class="fas fa-table"></i> {% trans 'Add Scores' %}
+    </a>
+    <a href="{% url 'quiz_marking' %}" class="quick-action-btn">
+        <i class="fas fa-check-double"></i> {% trans 'Mark Exams' %}
+    </a>
+    {% endif %}
+    {% if request.user.is_student %}
+    <a href="{% url 'course_registration' %}" class="quick-action-btn">
+        <i class="fas fa-plus-circle"></i> {% trans 'Register Course' %}
+    </a>
+    <a href="{% url 'grade_results' %}" class="quick-action-btn">
+        <i class="fas fa-chart-line"></i> {% trans 'View Grades' %}
+    </a>
+    {% endif %}
+    <a href="{% url 'quiz_progress' %}" class="quick-action-btn">
+        <i class="fas fa-chart-line"></i> {% trans 'View Progress' %}
+    </a>
+</div>
+
+<!-- Stats Cards -->
+<div class="dashboard-stats">
+    <div class="row g-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon students">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div class="stat-value">{{ student_count }}</div>
+                <div class="stat-label">{% trans 'Total Students' %}</div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i> 12%
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon lecturers">
+                    <i class="fas fa-chalkboard-user"></i>
+                </div>
+                <div class="stat-value">{{ lecturer_count }}</div>
+                <div class="stat-label">{% trans 'Total Lecturers' %}</div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i> 8%
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon admins">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div class="stat-value">{{ superuser_count }}</div>
+                <div class="stat-label">{% trans 'Administrators' %}</div>
+                <div class="stat-trend trend-down">
+                    <i class="fas fa-arrow-down"></i> 2%
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon courses">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <div class="stat-value">{{ total_courses|default:'0' }}</div>
+                <div class="stat-label">{% trans 'Active Courses' %}</div>
+                <div class="stat-trend trend-up">
+                    <i class="fas fa-arrow-up"></i> 15%
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-line text-primary"></i> {% trans 'Platform Activity' %}</h3>
+                <div class="expand-btn" onclick="expandChart(this)">
+                    <i class="fas fa-expand-alt"></i>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="trafficChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-bar text-success"></i> {% trans 'Course Enrollment' %}</h3>
+                <div class="expand-btn" onclick="expandChart(this)">
+                    <i class="fas fa-expand-alt"></i>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="enrollmentChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2 & Activity -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-line text-warning"></i> {% trans 'Student Performance' %}</h3>
+                <div class="expand-btn" onclick="expandChart(this)">
+                    <i class="fas fa-expand-alt"></i>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="activity-feed">
+            <div class="feed-header">
+                <h5><i class="fas fa-bell me-2"></i> {% trans 'Recent Activities' %}</h5>
+            </div>
+            <div class="feed-items" id="activityFeed">
+                {% for log in logs %}
+                <div class="feed-item">
+                    <div class="feed-icon {% cycle 'info' 'success' 'warning' %}">
+                        <i class="fas fa-{% cycle 'bell' 'check-circle' 'info-circle' %}"></i>
+                    </div>
+                    <div class="feed-content">
+                        <div class="feed-message">{{ log.message }}</div>
+                        <div class="feed-time">
+                            <i class="far fa-clock me-1"></i>
+                            {{ log.created_at|timesince }} {% trans 'ago' %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">{% trans 'No recent activity' %}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Demographics Section -->
+<div class="demographics-section">
+    <div class="section-title">
+        <i class="fas fa-chart-pie text-primary"></i>
+        <span>{% trans 'School Demographics' %}</span>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="demographic-card">
+                <div class="demographic-chart">
+                    <canvas id="genderChart"></canvas>
+                </div>
+                <h6>{% trans 'Gender Distribution' %}</h6>
+                <div class="small text-muted">
+                    <span class="text-primary">♂ {% trans 'Male' %}: {{ males_count }}</span> | 
+                    <span class="text-success">♀ {% trans 'Female' %}: {{ females_count }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="demographic-card">
+                <div class="demographic-chart">
+                    <canvas id="qualificationChart"></canvas>
+                </div>
+                <h6>{% trans 'Lecturer Qualifications' %}</h6>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="demographic-card">
+                <div class="demographic-chart">
+                    <canvas id="levelChart"></canvas>
+                </div>
+                <h6>{% trans 'Student Levels' %}</h6>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+// Display current date
+document.getElementById('currentDate').innerHTML = moment().format('MMMM D, YYYY');
+
+// Chart colors based on theme
+function getChartColors() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return {
+        grid: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+        text: isDark ? '#94a3b8' : '#64748b'
+    };
+}
+
+// Traffic Chart
+const ctx1 = document.getElementById('trafficChart').getContext('2d');
+new Chart(ctx1, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+        datasets: [
+            {
+                label: '{% trans "Students" %}',
+                data: [65, 89, 112, 145, 178, 210, {{ student_count }}],
+                borderColor: '#4f46e5',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#4f46e5',
+                pointBorderColor: '#fff',
+                pointRadius: 4,
+                pointHoverRadius: 6
+            },
+            {
+                label: '{% trans "Lecturers" %}',
+                data: [28, 35, 42, 48, 52, 58, {{ lecturer_count }}],
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#fff',
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+            y: { grid: { color: getChartColors().grid } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+// Enrollment Chart
+const ctx2 = document.getElementById('enrollmentChart').getContext('2d');
+new Chart(ctx2, {
+    type: 'bar',
+    data: {
+        labels: ['Comp Sci', 'Engineering', 'Business', 'Arts', 'Medicine'],
+        datasets: [{
+            label: '{% trans "Enrolled Students" %}',
+            data: [245, 189, 167, 98, 76],
+            backgroundColor: 'rgba(79, 70, 229, 0.8)',
+            borderRadius: 8,
+            barPercentage: 0.7,
+            categoryPercentage: 0.8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.raw} students` } }
+        },
+        scales: {
+            y: { beginAtZero: true, grid: { color: getChartColors().grid } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+// Performance Chart
+const ctx3 = document.getElementById('performanceChart').getContext('2d');
+new Chart(ctx3, {
+    type: 'line',
+    data: {
+        labels: ['2019', '2020', '2021', '2022', '2023', '2024'],
+        datasets: [
+            {
+                label: '{% trans "Computer Science" %}',
+                data: [72, 75, 78, 82, 85, 88],
+                borderColor: '#4f46e5',
+                backgroundColor: 'transparent',
+                tension: 0.3
+            },
+            {
+                label: '{% trans "Engineering" %}',
+                data: [68, 70, 73, 76, 80, 83],
+                borderColor: '#10b981',
+                backgroundColor: 'transparent',
+                tension: 0.3
+            },
+            {
+                label: '{% trans "Business" %}',
+                data: [75, 77, 80, 82, 84, 86],
+                borderColor: '#f59e0b',
+                backgroundColor: 'transparent',
+                tension: 0.3
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}%` } }
+        },
+        scales: {
+            y: { min: 60, max: 100, grid: { color: getChartColors().grid } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+// Gender Chart
+const ctx4 = document.getElementById('genderChart').getContext('2d');
+new Chart(ctx4, {
+    type: 'doughnut',
+    data: {
+        labels: ['{% trans "Male" %}', '{% trans "Female" %}'],
+        datasets: [{
+            data: [{{ males_count }}, {{ females_count }}],
+            backgroundColor: ['#4f46e5', '#10b981'],
+            borderWidth: 0,
+            hoverOffset: 10
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw} (${((ctx.raw / ({{ males_count }} + {{ females_count }})) * 100).toFixed(1)}%)` } }
+        }
+    }
+});
+
+// Qualification Chart
+const ctx5 = document.getElementById('qualificationChart').getContext('2d');
+new Chart(ctx5, {
+    type: 'pie',
+    data: {
+        labels: ['PhD', 'Masters', 'Bachelor'],
+        datasets: [{
+            data: [24, 45, 31],
+            backgroundColor: ['#4f46e5', '#10b981', '#f59e0b'],
+            borderWidth: 0,
+            hoverOffset: 10
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { position: 'bottom' } }
+    }
+});
+
+// Level Chart
+const ctx6 = document.getElementById('levelChart').getContext('2d');
+new Chart(ctx6, {
+    type: 'pie',
+    data: {
+        labels: ['PhD', 'Masters', 'Bachelor'],
+        datasets: [{
+            data: [10, 35, 55],
+            backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+            borderWidth: 0,
+            hoverOffset: 10
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { position: 'bottom' } }
+    }
+});
+
+// Expand chart functionality
+function expandChart(btn) {
+    const card = btn.closest('.chart-card');
+    if (card.classList.contains('expanded')) {
+        card.classList.remove('expanded');
+        card.style.position = '';
+        card.style.top = '';
+        card.style.left = '';
+        card.style.width = '';
+        card.style.height = '';
+        card.style.zIndex = '';
+        card.style.boxShadow = '';
+    } else {
+        card.classList.add('expanded');
+        card.style.position = 'fixed';
+        card.style.top = '10%';
+        card.style.left = '10%';
+        card.style.width = '80%';
+        card.style.height = '80%';
+        card.style.zIndex = '1000';
+        card.style.boxShadow = 'var(--shadow-xl)';
+        card.style.overflow = 'auto';
+    }
+}
+
+// Auto-refresh activity feed every 30 seconds
+setInterval(function() {
+    fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newFeed = doc.getElementById('activityFeed');
+            if (newFeed) {
+                document.getElementById('activityFeed').innerHTML = newFeed.innerHTML;
+            }
+        })
+        .catch(err => console.log('Auto-refresh failed:', err));
+}, 30000);
+</script>
+{% endblock %}

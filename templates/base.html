@@ -1,0 +1,315 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="description" content="{% trans 'SkyLearn - Modern Learning Management System for schools, colleges, and universities' %}">
+    <meta name="keywords" content="LMS, Learning Management System, Education, Django, School Management">
+    <meta name="author" content="SkyLearn">
+    <meta name="theme-color" content="#4f46e5">
+    
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:title" content="{% block og_title %}SkyLearn LMS{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Modern Learning Management System{% endblock %}">
+    <meta property="og:image" content="{% static 'img/og-image.png' %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}SkyLearn LMS{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Modern Learning Management System{% endblock %}">
+    
+    <title>{% block title %}SkyLearn LMS{% endblock title %}</title>
+
+    <!-- Preload Critical Assets -->
+    <link rel="preload" href="{% static 'vendor/bootstrap-5.3.2/css/bootstrap.min.css' %}" as="style">
+    <link rel="preload" href="{% static 'css/style.min.css' %}" as="style">
+    <link rel="preload" href="{% static 'vendor/fontawesome-6.5.1/css/all.min.css' %}" as="style">
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static 'img/favicon.png' %}" type="image/x-icon">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/bootstrap-5.3.2/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'vendor/fontawesome-6.5.1/css/all.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.min.css' %}">
+    
+    <!-- Modern CSS Variables Override -->
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #818cf8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --sidebar-width: 280px;
+            --sidebar-collapsed-width: 80px;
+            --header-height: 70px;
+            --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        [data-theme="dark"] {
+            --primary: #818cf8;
+            --primary-dark: #6366f1;
+            --secondary: #94a3b8;
+            --dark: #f8fafc;
+            --light: #1e293b;
+        }
+        
+        /* Loading Animation */
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--light);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease;
+        }
+        
+        .page-loader.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--primary-light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Skip to content link - Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            z-index: 10000;
+            text-decoration: none;
+            border-radius: 0 0 4px 0;
+            transition: top 0.2s;
+        }
+        
+        .skip-link:focus {
+            top: 0;
+        }
+        
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+        
+        .toast-notification {
+            background: white;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .toast-notification.show {
+            transform: translateX(0);
+        }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--light);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--secondary);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+    </style>
+    
+    {% block header %}{% endblock %}
+</head>
+
+<body>
+    <!-- Skip to content link for accessibility -->
+    <a href="#main-content" class="skip-link">{% trans 'Skip to main content' %}</a>
+    
+    <!-- Page Loader -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-spinner"></div>
+    </div>
+    
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    {% block sidebar %}
+        {% include 'sidebar.html' %}
+    {% endblock %}
+
+    {% block maincontent %}
+    <div id="main">
+        {% block topbar %}
+            {% include 'navbar.html' %}
+        {% endblock %}
+
+        <div class="container-fluid" id="main-content">
+            <!-- Breadcrumb will be injected by child templates -->
+            {% block breadcrumb %}{% endblock %}
+            
+            <!-- Messages -->
+            {% if messages %}
+            <div class="messages-container mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show modern-alert" role="alert">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            {% block content %}{% endblock content %}
+        </div>
+        
+        <!-- Back to Top Button -->
+        <button id="backToTop" class="btn btn-primary rounded-circle position-fixed" style="bottom: 20px; right: 20px; width: 44px; height: 44px; display: none; z-index: 99;" aria-label="Back to top">
+            <i class="fas fa-arrow-up"></i>
+        </button>
+    </div>
+    {% endblock %}
+    
+    <!-- JavaScript -->
+    <script src="{% url 'javascript-catalog' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/jquery-3.7.1/jquery-3.7.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vendor/bootstrap-5.3.2/js/bootstrap.bundle.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
+    
+    <!-- Modern Theme JavaScript -->
+    <script>
+        // Hide page loader when page is fully loaded
+        window.addEventListener('load', function() {
+            const loader = document.getElementById('pageLoader');
+            if (loader) {
+                loader.classList.add('fade-out');
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 300);
+            }
+        });
+        
+        // Dark/Light Mode Toggle
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 
+                              (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            localStorage.setItem('theme', savedTheme);
+        }
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Dispatch event for other components
+            window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
+        }
+        
+        // Initialize theme
+        initTheme();
+        
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+                document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+            }
+        });
+        
+        // Back to Top Button
+        const backToTopBtn = document.getElementById('backToTop');
+        if (backToTopBtn) {
+            window.addEventListener('scroll', () => {
+                if (window.pageYOffset > 300) {
+                    backToTopBtn.style.display = 'block';
+                } else {
+                    backToTopBtn.style.display = 'none';
+                }
+            });
+            
+            backToTopBtn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+        
+        // Show toast notification function
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} text-${type}"></i>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        // Network status detection
+        window.addEventListener('online', () => showToast(gettext('Connection restored'), 'success'));
+        window.addEventListener('offline', () => showToast(gettext('Connection lost'), 'danger'));
+        
+        // Prevent accidental form resubmission
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    </script>
+    
+    {% block js %}{% endblock js %}
+</body>
+</html>

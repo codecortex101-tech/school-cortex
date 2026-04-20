@@ -1,0 +1,1035 @@
+{% extends 'registration/registration_base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans 'Create Account' %} | {% trans 'SkyLearn LMS' %}{% endblock title %}
+
+{% block content %}
+<div class="register-container">
+    <div class="register-wrapper">
+        <!-- Left Side - Info/Branding -->
+        <div class="register-info">
+            <div class="info-content">
+                <div class="info-logo">
+                    <img src="{% static 'img/brand.svg' %}" alt="SkyLearn" class="logo-img-white">
+                </div>
+                <h2>{% trans 'Join SkyLearn Today!' %}</h2>
+                <p>{% trans 'Create your account to start your learning journey. Access courses, take quizzes, and track your progress.' %}</p>
+                
+                <div class="info-benefits">
+                    <div class="benefit">
+                        <i class="fas fa-graduation-cap"></i>
+                        <div>
+                            <h6>{% trans 'Quality Education' %}</h6>
+                            <p>{% trans 'Access high-quality courses' %}</p>
+                        </div>
+                    </div>
+                    <div class="benefit">
+                        <i class="fas fa-chart-line"></i>
+                        <div>
+                            <h6>{% trans 'Track Progress' %}</h6>
+                            <p>{% trans 'Monitor your learning journey' %}</p>
+                        </div>
+                    </div>
+                    <div class="benefit">
+                        <i class="fas fa-certificate"></i>
+                        <div>
+                            <h6>{% trans 'Get Certified' %}</h6>
+                            <p>{% trans 'Earn certificates on completion' %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Registration Form -->
+        <div class="register-form-wrapper">
+            <div class="form-header">
+                <h2>{% trans 'Create Account' %}</h2>
+                <p>{% trans 'Fill in your details to get started' %}</p>
+            </div>
+
+            <form action="" method="POST" id="register-form" enctype="multipart/form-data" class="register-form">
+                {% csrf_token %}
+                
+                <!-- Progress Steps -->
+                <div class="form-steps">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">{% trans 'Account' %}</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">{% trans 'Personal' %}</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">{% trans 'Academic' %}</div>
+                    </div>
+                </div>
+
+                <!-- Step 1: Account Details -->
+                <div class="form-step active" id="step1">
+                    <div class="step-title">
+                        <i class="fas fa-user-circle"></i>
+                        {% trans 'Account Information' %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="username_id">
+                            <i class="fas fa-id-card"></i>
+                            {% trans 'Username' %}
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   name="username" 
+                                   id="username_id" 
+                                   class="form-control" 
+                                   placeholder="{% trans 'Choose a username' %}"
+                                   autocomplete="username"
+                                   autofocus
+                                   required>
+                            <div class="input-icon success-icon" style="display: none;">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="input-icon error-icon" style="display: none;">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                        </div>
+                        <div id="username-message" class="validation-message"></div>
+                        <div class="input-hint">
+                            <i class="fas fa-info-circle"></i>
+                            {% trans 'Username must be unique and contain only letters, numbers, and @/./+/-/_ characters.' %}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email_id">
+                            <i class="fas fa-envelope"></i>
+                            {% trans 'Email Address' %}
+                            <span class="required">*</span>
+                        </label>
+                        <input type="email" 
+                               name="email" 
+                               id="email_id" 
+                               class="form-control" 
+                               placeholder="{% trans 'you@example.com' %}"
+                               autocomplete="email"
+                               required>
+                        <div id="email-message" class="validation-message"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password1_id">
+                            <i class="fas fa-lock"></i>
+                            {% trans 'Password' %}
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="password" 
+                                   name="password1" 
+                                   id="password1_id" 
+                                   class="form-control" 
+                                   placeholder="{% trans 'Create a strong password' %}"
+                                   autocomplete="new-password"
+                                   required>
+                            <div class="input-icon toggle-password" onclick="togglePassword('password1_id')">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                        </div>
+                        <div class="password-strength">
+                            <div class="strength-bar">
+                                <div class="strength-level"></div>
+                            </div>
+                            <div class="strength-text" id="password-strength-text"></div>
+                        </div>
+                        <div class="password-requirements">
+                            <p class="requirement-title"><i class="fas fa-shield-alt"></i> {% trans 'Password must contain:' %}</p>
+                            <ul class="requirement-list">
+                                <li id="req-length"><i class="fas fa-circle"></i> {% trans 'At least 8 characters' %}</li>
+                                <li id="req-upper"><i class="fas fa-circle"></i> {% trans 'At least one uppercase letter' %}</li>
+                                <li id="req-lower"><i class="fas fa-circle"></i> {% trans 'At least one lowercase letter' %}</li>
+                                <li id="req-number"><i class="fas fa-circle"></i> {% trans 'At least one number' %}</li>
+                                <li id="req-special"><i class="fas fa-circle"></i> {% trans 'At least one special character' %}</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password2_id">
+                            <i class="fas fa-lock"></i>
+                            {% trans 'Confirm Password' %}
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="password" 
+                                   name="password2" 
+                                   id="password2_id" 
+                                   class="form-control" 
+                                   placeholder="{% trans 'Confirm your password' %}"
+                                   autocomplete="new-password"
+                                   required>
+                            <div class="input-icon toggle-password" onclick="togglePassword('password2_id')">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                        </div>
+                        <div id="password-match-message" class="validation-message"></div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Personal Information -->
+                <div class="form-step" id="step2">
+                    <div class="step-title">
+                        <i class="fas fa-user"></i>
+                        {% trans 'Personal Information' %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="first_name_id">
+                                    <i class="fas fa-user"></i>
+                                    {% trans 'First Name' %}
+                                </label>
+                                <input type="text" 
+                                       name="first_name" 
+                                       id="first_name_id" 
+                                       class="form-control" 
+                                       placeholder="{% trans 'Your first name' %}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="last_name_id">
+                                    <i class="fas fa-user"></i>
+                                    {% trans 'Last Name' %}
+                                </label>
+                                <input type="text" 
+                                       name="last_name" 
+                                       id="last_name_id" 
+                                       class="form-control" 
+                                       placeholder="{% trans 'Your last name' %}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="gender_id">
+                            <i class="fas fa-venus-mars"></i>
+                            {% trans 'Gender' %}
+                        </label>
+                        <select name="gender" id="gender_id" class="form-control">
+                            <option value="">{% trans 'Select gender' %}</option>
+                            <option value="M">{% trans 'Male' %}</option>
+                            <option value="F">{% trans 'Female' %}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone_id">
+                            <i class="fas fa-phone"></i>
+                            {% trans 'Phone Number' %}
+                        </label>
+                        <input type="tel" 
+                               name="phone" 
+                               id="phone_id" 
+                               class="form-control" 
+                               placeholder="{% trans '+1234567890' %}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address_id">
+                            <i class="fas fa-map-marker-alt"></i>
+                            {% trans 'Address' %}
+                        </label>
+                        <textarea name="address" 
+                                  id="address_id" 
+                                  class="form-control" 
+                                  rows="2"
+                                  placeholder="{% trans 'Your address' %}"></textarea>
+                    </div>
+                </div>
+
+                <!-- Step 3: Academic Information -->
+                <div class="form-step" id="step3">
+                    <div class="step-title">
+                        <i class="fas fa-graduation-cap"></i>
+                        {% trans 'Academic Information' %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="level_id">
+                            <i class="fas fa-layer-group"></i>
+                            {% trans 'Education Level' %}
+                        </label>
+                        <select name="level" id="level_id" class="form-control">
+                            <option value="">{% trans 'Select education level' %}</option>
+                            <option value="Bachelor">{% trans 'Bachelor Degree' %}</option>
+                            <option value="Master">{% trans 'Master Degree' %}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="program_id">
+                            <i class="fas fa-book"></i>
+                            {% trans 'Program' %}
+                        </label>
+                        <select name="program" id="program_id" class="form-control">
+                            <option value="">{% trans 'Select program' %}</option>
+                            {{ form.program }}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Form Errors -->
+                {% if form.errors %}
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {% trans 'Please correct the errors below.' %}
+                </div>
+                {% endif %}
+
+                <!-- Navigation Buttons -->
+                <div class="form-navigation">
+                    <button type="button" class="btn-prev" id="prevBtn" style="display: none;">
+                        <i class="fas fa-arrow-left"></i> {% trans 'Previous' %}
+                    </button>
+                    <button type="button" class="btn-next" id="nextBtn">
+                        {% trans 'Next' %} <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button type="submit" class="btn-submit" id="submitBtn" style="display: none;">
+                        <i class="fas fa-user-plus"></i> {% trans 'Create Account' %}
+                    </button>
+                </div>
+            </form>
+
+            <!-- Login Link -->
+            <div class="login-link">
+                <p>{% trans 'Already have an account?' %} <a href="{% url 'login' %}">{% trans 'Sign In' %}</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Registration Page Styles */
+.register-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem;
+}
+
+.register-wrapper {
+    display: flex;
+    max-width: 1200px;
+    width: 100%;
+    background: white;
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-xl);
+    animation: fadeInUp 0.5s ease;
+}
+
+[data-theme="dark"] .register-wrapper {
+    background: var(--gray-800);
+}
+
+/* Left Info Section */
+.register-info {
+    flex: 1;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    padding: 3rem;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.register-info::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: pulse 8s ease-in-out infinite;
+}
+
+.info-content {
+    position: relative;
+    z-index: 1;
+    color: white;
+}
+
+.logo-img-white {
+    max-width: 180px;
+    margin-bottom: 2rem;
+    filter: brightness(0) invert(1);
+}
+
+.info-content h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.info-content p {
+    opacity: 0.9;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.info-benefits {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.benefit {
+    display: flex;
+    gap: 1rem;
+}
+
+.benefit i {
+    font-size: 1.5rem;
+    margin-top: 0.25rem;
+}
+
+.benefit h6 {
+    margin: 0 0 0.25rem;
+    font-weight: 600;
+}
+
+.benefit p {
+    margin: 0;
+    font-size: 0.875rem;
+    opacity: 0.8;
+}
+
+/* Right Form Section */
+.register-form-wrapper {
+    flex: 1;
+    padding: 2.5rem;
+    background: white;
+}
+
+[data-theme="dark"] .register-form-wrapper {
+    background: var(--gray-800);
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.form-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 0.25rem;
+}
+
+[data-theme="dark"] .form-header h2 {
+    color: var(--gray-200);
+}
+
+.form-header p {
+    color: var(--gray-500);
+    font-size: 0.875rem;
+}
+
+/* Form Steps */
+.form-steps {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.step-number {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--gray-200);
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    transition: var(--transition-fast);
+}
+
+.step.active .step-number {
+    background: var(--primary);
+    color: white;
+}
+
+.step.completed .step-number {
+    background: var(--success);
+    color: white;
+}
+
+.step-label {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.step.active .step-label {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.step-line {
+    flex: 1;
+    height: 2px;
+    background: var(--gray-200);
+    margin: 0 0.5rem;
+}
+
+/* Form Steps Content */
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.step-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+.form-group label i {
+    margin-right: 0.5rem;
+    color: var(--primary);
+}
+
+.required {
+    color: var(--error);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    transition: var(--transition-fast);
+    background: white;
+}
+
+[data-theme="dark"] .form-control {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--gray-200);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-control.error {
+    border-color: var(--error);
+}
+
+.form-control.valid {
+    border-color: var(--success);
+}
+
+/* Input Group */
+.input-group {
+    position: relative;
+}
+
+.input-group .form-control {
+    padding-right: 2.5rem;
+}
+
+.input-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: var(--gray-400);
+}
+
+.success-icon { color: var(--success); }
+.error-icon { color: var(--error); }
+
+/* Password Strength */
+.password-strength {
+    margin-top: 0.5rem;
+}
+
+.strength-bar {
+    height: 4px;
+    background: var(--gray-200);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.strength-level {
+    width: 0;
+    height: 100%;
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+.strength-text {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+}
+
+/* Password Requirements */
+.password-requirements {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+}
+
+[data-theme="dark"] .password-requirements {
+    background: var(--gray-700);
+}
+
+.requirement-title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--gray-600);
+}
+
+.requirement-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.requirement-list li {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.requirement-list li.valid {
+    color: var(--success);
+}
+
+.requirement-list li.valid i {
+    color: var(--success);
+}
+
+.requirement-list li i {
+    font-size: 0.6rem;
+}
+
+/* Validation Messages */
+.validation-message {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.validation-message .text-success {
+    color: var(--success);
+}
+
+.validation-message .text-danger {
+    color: var(--error);
+}
+
+.input-hint {
+    font-size: 0.7rem;
+    color: var(--gray-400);
+    margin-top: 0.25rem;
+}
+
+/* Alert */
+.alert-error {
+    background: var(--error-bg);
+    color: var(--error);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-left: 3px solid var(--error);
+}
+
+/* Navigation Buttons */
+.form-navigation {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.btn-prev, .btn-next, .btn-submit {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+}
+
+.btn-prev {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.btn-prev:hover {
+    background: var(--gray-300);
+}
+
+.btn-next {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-next:hover {
+    background: var(--primary-dark);
+    transform: translateX(4px);
+}
+
+.btn-submit {
+    background: var(--success);
+    color: white;
+}
+
+.btn-submit:hover {
+    background: var(--success-dark);
+    transform: translateY(-2px);
+}
+
+.btn-prev:disabled, .btn-next:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Login Link */
+.login-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.login-link p {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+}
+
+.login-link a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 0.3; }
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+    .register-wrapper {
+        flex-direction: column;
+        max-width: 550px;
+    }
+    
+    .register-info {
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .info-benefits {
+        display: none;
+    }
+    
+    .register-form-wrapper {
+        padding: 1.5rem;
+    }
+    
+    .requirement-list {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .register-container {
+        padding: 1rem;
+    }
+    
+    .form-steps {
+        padding: 0;
+    }
+    
+    .step-label {
+        display: none;
+    }
+    
+    .step-number {
+        width: 32px;
+        height: 32px;
+    }
+}
+</style>
+
+<script>
+// Multi-step form navigation
+let currentStep = 1;
+const totalSteps = 3;
+
+function showStep(step) {
+    // Hide all steps
+    document.querySelectorAll('.form-step').forEach(el => {
+        el.classList.remove('active');
+    });
+    document.getElementById(`step${step}`).classList.add('active');
+    
+    // Update step indicators
+    document.querySelectorAll('.step').forEach((el, index) => {
+        const stepNum = index + 1;
+        if (stepNum === step) {
+            el.classList.add('active');
+            el.classList.remove('completed');
+        } else if (stepNum < step) {
+            el.classList.add('completed');
+            el.classList.remove('active');
+        } else {
+            el.classList.remove('active', 'completed');
+        }
+    });
+    
+    // Update buttons
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (step === 1) {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'inline-flex';
+        submitBtn.style.display = 'none';
+    } else if (step === totalSteps) {
+        prevBtn.style.display = 'inline-flex';
+        nextBtn.style.display = 'none';
+        submitBtn.style.display = 'inline-flex';
+    } else {
+        prevBtn.style.display = 'inline-flex';
+        nextBtn.style.display = 'inline-flex';
+        submitBtn.style.display = 'none';
+    }
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+    if (validateStep(currentStep)) {
+        currentStep++;
+        showStep(currentStep);
+    }
+});
+
+document.getElementById('prevBtn').addEventListener('click', () => {
+    currentStep--;
+    showStep(currentStep);
+});
+
+function validateStep(step) {
+    // Add validation logic for each step
+    if (step === 1) {
+        const username = document.getElementById('username_id').value;
+        const email = document.getElementById('email_id').value;
+        const password1 = document.getElementById('password1_id').value;
+        const password2 = document.getElementById('password2_id').value;
+        
+        if (!username || !email || !password1 || !password2) {
+            alert('{% trans "Please fill in all required fields." %}');
+            return false;
+        }
+        if (password1 !== password2) {
+            alert('{% trans "Passwords do not match." %}');
+            return false;
+        }
+    }
+    return true;
+}
+
+// Toggle password visibility
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    const icon = field.parentElement.querySelector('.toggle-password i');
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        field.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+// Password strength meter
+document.getElementById('password1_id').addEventListener('input', function() {
+    const password = this.value;
+    const strengthBar = document.querySelector('.strength-level');
+    const strengthText = document.getElementById('password-strength-text');
+    
+    let strength = 0;
+    let message = '';
+    let color = '';
+    
+    if (password.length >= 8) strength++;
+    if (password.match(/[A-Z]/)) strength++;
+    if (password.match(/[a-z]/)) strength++;
+    if (password.match(/[0-9]/)) strength++;
+    if (password.match(/[^A-Za-z0-9]/)) strength++;
+    
+    if (strength <= 2) {
+        message = '{% trans "Weak password" %}';
+        color = '#ef4444';
+    } else if (strength <= 3) {
+        message = '{% trans "Fair password" %}';
+        color = '#f59e0b';
+    } else if (strength <= 4) {
+        message = '{% trans "Good password" %}';
+        color = '#10b981';
+    } else {
+        message = '{% trans "Strong password" %}';
+        color = '#4f46e5';
+    }
+    
+    const width = (strength / 5) * 100;
+    strengthBar.style.width = `${width}%`;
+    strengthBar.style.background = color;
+    strengthText.textContent = message;
+    strengthText.style.color = color;
+    
+    // Update requirement checks
+    document.getElementById('req-length').classList.toggle('valid', password.length >= 8);
+    document.getElementById('req-upper').classList.toggle('valid', /[A-Z]/.test(password));
+    document.getElementById('req-lower').classList.toggle('valid', /[a-z]/.test(password));
+    document.getElementById('req-number').classList.toggle('valid', /[0-9]/.test(password));
+    document.getElementById('req-special').classList.toggle('valid', /[^A-Za-z0-9]/.test(password));
+});
+
+// Password match validation
+document.getElementById('password2_id').addEventListener('input', function() {
+    const password1 = document.getElementById('password1_id').value;
+    const password2 = this.value;
+    const messageDiv = document.getElementById('password-match-message');
+    
+    if (password2) {
+        if (password1 === password2) {
+            messageDiv.innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> {% trans "Passwords match" %}</span>';
+            this.classList.add('valid');
+            this.classList.remove('error');
+        } else {
+            messageDiv.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-circle"></i> {% trans "Passwords do not match" %}</span>';
+            this.classList.add('error');
+            this.classList.remove('valid');
+        }
+    } else {
+        messageDiv.innerHTML = '';
+    }
+});
+
+// Username validation
+$("#username_id").on("input", function() {
+    const username = $(this).val();
+    const messageWrapper = $('#username-message');
+    
+    if (username.length < 3) {
+        messageWrapper.html('');
+        return;
+    }
+    
+    $.ajax({
+        url: "/accounts/ajax/validate-username/",
+        data: { username: username },
+        dataType: 'json',
+        success: function(data) {
+            if (data.is_taken) {
+                messageWrapper.html('<span class="text-danger"><i class="fas fa-exclamation-circle"></i> {% trans "Username already taken" %}</span>');
+            } else {
+                messageWrapper.html('<span class="text-success"><i class="fas fa-check-circle"></i> {% trans "Username available" %}</span>');
+            }
+        }
+    });
+});
+
+// Form submission
+document.getElementById('register-form').addEventListener('submit', function(e) {
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {% trans "Creating account..." %}';
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}

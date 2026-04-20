@@ -1,0 +1,710 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ quiz.title }} | {% trans 'Quiz' %} | {% trans 'SkyLearn LMS' %}{% endblock %}
+
+{% block description %}{{ quiz.title }} - {{ quiz.description }}{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'programs' %}">{% trans 'Programs' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'program_detail' course.program.id %}">{{ course.program }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ course.get_absolute_url }}">{{ course.title|truncatechars:30 }}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'quiz_index' course.slug %}">{% trans 'Quizzes' %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ quiz.title|title|truncatechars:25 }}</li>
+    </ol>
+</nav>
+
+<!-- Quiz Header -->
+<div class="quiz-header-modern">
+    <div class="quiz-info">
+        <h1 class="quiz-title">{{ quiz.title|title }}</h1>
+        <div class="quiz-meta">
+            <span class="meta-badge">
+                <i class="fas fa-tag"></i> {{ quiz.category|default:'General' }}
+            </span>
+            <span class="meta-badge">
+                <i class="fas fa-star"></i> {% trans 'Pass Mark:' %} {{ quiz.pass_mark }}%
+            </span>
+            {% if quiz.single_attempt %}
+            <span class="meta-badge warning">
+                <i class="fas fa-exclamation-triangle"></i> {% trans 'Single Attempt' %}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    {% if progress %}
+    <div class="quiz-progress">
+        <div class="progress-circle">
+            <svg viewBox="0 0 36 36" class="progress-svg">
+                <path class="progress-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path class="progress-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                      stroke-dasharray="{{ progress_percent }}, 100" />
+                <text x="18" y="20.35" class="progress-text">{{ progress.0|add:1 }}/{{ progress.1 }}</text>
+            </svg>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="quiz-container">
+    
+    <!-- Previous Question Feedback -->
+    {% if previous.answers %}
+    <div class="feedback-card">
+        <div class="feedback-header {% if previous.previous_outcome %}correct{% else %}incorrect{% endif %}">
+            <i class="fas {% if previous.previous_outcome %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            <span>
+                {% if previous.previous_outcome %}
+                {% trans 'Correct Answer!' %}
+                {% else %}
+                {% trans 'Incorrect Answer' %}
+                {% endif %}
+            </span>
+        </div>
+        
+        <div class="feedback-body">
+            <p class="feedback-question">
+                <strong>{% trans 'Previous Question:' %}</strong><br>
+                {{ previous.previous_question.content }}
+            </p>
+            
+            <div class="answers-review">
+                <p class="mb-2"><strong>{% trans 'Your Answer:' %}</strong></p>
+                <ul class="answer-list">
+                    {% for answer in previous.answers %}
+                    <li class="answer-item {% if answer.correct %}correct-answer{% endif %}">
+                        <i class="fas {% if answer.correct %}fa-check-circle{% else %}fa-circle{% endif %}"></i>
+                        {{ answer }}
+                        {% if answer.id|add:"0" == previous.previous_answer|add:"0" %}
+                        <span class="your-answer-badge">{% trans 'Your Answer' %}</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            {% if user_was_incorrect %}
+            <div class="incorrect-notice">
+                <i class="fas fa-info-circle"></i>
+                {% trans 'You answered this question incorrectly.' %}
+            </div>
+            {% endif %}
+            
+            <div class="explanation-box">
+                <div class="explanation-title">
+                    <i class="fas fa-lightbulb"></i>
+                    <strong>{% trans 'Explanation:' %}</strong>
+                </div>
+                <div class="explanation-content">
+                    {% if previous.previous_question.explanation %}
+                    {{ previous.previous_question.explanation }}
+                    {% else %}
+                    <em class="text-muted">{% trans 'No explanation provided for this question.' %}</em>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <br />
+
+    <!-- Current Question -->
+    {% if question %}
+    
+    <div class="question-card">
+        <div class="question-header">
+            <div class="question-number">
+                {% trans 'Question' %} {{ progress.0|add:1 }} {% trans 'of' %} {{ progress.1 }}
+            </div>
+            <div class="question-timer" id="questionTimer" style="display: none;">
+                <i class="fas fa-hourglass-half"></i>
+                <span id="timerDisplay">00:00</span>
+            </div>
+        </div>
+        
+        <div class="question-content">
+            <h3 class="question-text">{{ question.content }}</h3>
+            
+            {% if question.figure %}
+            <div class="question-figure">
+                <img src="{{ question.figure.url }}" alt="{{ question.content }}" class="figure-img">
+            </div>
+            {% endif %}
+        </div>
+        
+        <form action="" method="POST" id="quizForm" class="answer-form">
+            {% csrf_token %}
+            <input type="hidden" name="question_id" value="{{ question.id }}">
+            
+            <div class="answers-container">
+                <p class="answers-label"><i class="fas fa-list-ul"></i> {% trans 'Select your answer:' %}</p>
+                <div class="answers-list">
+                    {% for answer in form.answers %}
+                    <label class="answer-option">
+                        {{ answer.tag }}
+                        <span class="answer-text">{{ answer.choice_label }}</span>
+                        <span class="answer-checkmark"></span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <i class="fas fa-check-circle"></i>
+                    <span>{% trans 'Submit Answer' %}</span>
+                    <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    {% endif %}
+    
+    <!-- Quiz Instructions Modal -->
+    <div class="modal fade" id="instructionsModal" tabindex="-1" aria-labelledby="instructionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <h5 class="modal-title" id="instructionsModalLabel">{% trans 'Quiz Instructions' %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="instruction-list">
+                        <div class="instruction-item">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>{% trans "You cannot go back to previous questions after submitting." %}</span>
+                        </div>
+                        <div class="instruction-item">
+                            <i class="fas fa-clock"></i>
+                            <span>{% trans "Double-check your answer before proceeding." %}</span>
+                        </div>
+                        <div class="instruction-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{% trans "Each question carries equal weight." %}</span>
+                        </div>
+                        <div class="instruction-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span>{% trans "Your score will be shown at the end." %}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-start-quiz" data-bs-dismiss="modal">
+                        <i class="fas fa-play"></i> {% trans 'Start Quiz' %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Quiz Header */
+.quiz-header-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.5rem;
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+}
+
+.quiz-info {
+    flex: 1;
+}
+
+.quiz-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.quiz-meta {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.meta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--gray-100);
+    border-radius: 20px;
+    font-size: 0.7rem;
+    color: var(--gray-600);
+}
+
+.meta-badge.warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+/* Progress Circle */
+.quiz-progress {
+    flex-shrink: 0;
+}
+
+.progress-circle {
+    width: 70px;
+    height: 70px;
+}
+
+.progress-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.progress-bg {
+    fill: none;
+    stroke: var(--gray-200);
+    stroke-width: 3;
+}
+
+.progress-fill {
+    fill: none;
+    stroke: var(--success);
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.5s ease;
+}
+
+.progress-text {
+    fill: var(--gray-700);
+    font-size: 0.4rem;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    transform: rotate(90deg);
+    font-weight: bold;
+}
+
+/* Feedback Card */
+.feedback-card {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.feedback-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+}
+
+.feedback-header.correct {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.feedback-header.incorrect {
+    background: var(--error-bg);
+    color: var(--error);
+}
+
+.feedback-body {
+    padding: 1.5rem;
+}
+
+.feedback-question {
+    padding: 0.75rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    margin-bottom: 1rem;
+}
+
+/* Answers Review */
+.answers-review {
+    margin-bottom: 1rem;
+}
+
+.answer-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.answer-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 0.25rem;
+}
+
+.answer-item.correct-answer {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.answer-item i {
+    font-size: 0.75rem;
+}
+
+.your-answer-badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    padding: 0.125rem 0.5rem;
+    background: var(--primary-bg);
+    color: var(--primary);
+    border-radius: 20px;
+}
+
+/* Incorrect Notice */
+.incorrect-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--error-bg);
+    border-radius: var(--radius-lg);
+    font-size: 0.8rem;
+    color: var(--error);
+    margin-bottom: 1rem;
+}
+
+/* Explanation Box */
+.explanation-box {
+    padding: 1rem;
+    background: var(--info-bg);
+    border-radius: var(--radius-lg);
+    border-left: 3px solid var(--info);
+}
+
+.explanation-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--info);
+}
+
+.explanation-content {
+    font-size: 0.875rem;
+    color: var(--gray-700);
+    line-height: 1.5;
+}
+
+/* Question Card */
+.question-card {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.question-number {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--primary-bg);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+}
+
+.question-timer {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--warning);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Question Content */
+.question-content {
+    padding: 1.5rem;
+}
+
+.question-text {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.question-figure {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.figure-img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+/* Answers Container */
+.answers-container {
+    padding: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.answers-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 1rem;
+}
+
+.answers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.answer-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    border: 2px solid transparent;
+}
+
+.answer-option:hover {
+    background: var(--gray-100);
+    transform: translateX(4px);
+}
+
+.answer-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.answer-text {
+    flex: 1;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+}
+
+.answer-option:has(input:checked) {
+    background: var(--primary-bg);
+    border-color: var(--primary);
+}
+
+.answer-option:has(input:checked) .answer-text {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+/* Form Actions */
+.form-actions {
+    padding: 1rem 1.5rem;
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-200);
+    text-align: right;
+}
+
+.btn-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.5rem;
+    background: var(--success);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-submit:hover {
+    background: var(--success-dark);
+    transform: translateY(-2px);
+}
+
+.btn-submit:active {
+    transform: translateY(0);
+}
+
+/* Modal Styles */
+.modal-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--info-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--info);
+    margin-right: 0.75rem;
+}
+
+.instruction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.instruction-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+}
+
+.instruction-item i {
+    width: 24px;
+    color: var(--primary);
+}
+
+.btn-start-quiz {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    background: var(--success);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-start-quiz:hover {
+    background: var(--success-dark);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .quiz-header-modern {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .quiz-meta {
+        justify-content: center;
+    }
+    
+    .question-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .question-text {
+        font-size: 1rem;
+    }
+    
+    .answers-list {
+        gap: 0.5rem;
+    }
+    
+    .form-actions {
+        text-align: center;
+    }
+    
+    .btn-submit {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .feedback-body {
+        padding: 1rem;
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block js %}
+<script>
+// Instructions Modal
+document.addEventListener('DOMContentLoaded', function() {
+    // Only show modal on first question
+    {% if progress.0|add:1 == 1 and not previous.answers %}
+    const instructionsModal = new bootstrap.Modal(document.getElementById('instructionsModal'), {
+        backdrop: 'static',
+        keyboard: false
+    });
+    instructionsModal.show();
+    {% endif %}
+    
+    // Auto-save answer (optional)
+    const radioButtons = document.querySelectorAll('input[type="radio"]');
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Optional: Auto-submit or save to localStorage
+            // localStorage.setItem('currentAnswer', this.value);
+        });
+    });
+    
+    // Form submission with loading state
+    const form = document.getElementById('quizForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (form) {
+        form.addEventListener('submit', function() {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {% trans "Submitting..." %}';
+        });
+    }
+    
+    // Timer functionality (optional)
+    let timeLeft = 30; // seconds per question
+    const timerDisplay = document.getElementById('timerDisplay');
+    const questionTimer = document.getElementById('questionTimer');
+    
+    if (timerDisplay && questionTimer) {
+        questionTimer.style.display = 'flex';
+        const timer = setInterval(function() {
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                document.getElementById('quizForm').submit();
+            } else {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 5) {
+                    timerDisplay.style.color = '#ef4444';
+                }
+            }
+        }, 1000);
+    }
+});
+</script>
+{% endblock js %}
