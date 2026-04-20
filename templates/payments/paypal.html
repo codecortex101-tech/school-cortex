@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block title %}{% trans 'PayPal Payment' %} | {% trans 'SkyLearn LMS' %}{% endblock title %}
+{% block title %}{% trans 'PayPal Payment' %} | {% trans 'SchoolCortex LMS' %}{% endblock title %}
 
 {% block content %}
 
@@ -442,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }]
                 }],
                 application_context: {
-                    brand_name: 'SkyLearn LMS',
+                    brand_name: 'SchoolCortex LMS',
                     landing_page: 'BILLING',
                     user_action: 'PAY_NOW',
                     return_url: '{{ request.build_absolute_uri }}{% url "payment_success" %}',

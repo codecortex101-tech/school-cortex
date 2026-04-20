@@ -51,7 +51,7 @@ urls_to_test = [
 ]
 
 print("=" * 60)
-print("Testing SkyLearn LMS Features")
+print("Testing SchoolCortex LMS Features")
 print("=" * 60)
 
 for url_path, description in urls_to_test:

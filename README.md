@@ -2,7 +2,7 @@
 
 ### The world’s most high-end designed, lightweight, and feature-rich learning management system.
 
-# SkyLearn: Open source learning management system
+# SchoolCortex: Open source learning management system
 
 Learning management system using Django web framework. You might want to develop a learning management system (also known as a school/college management system) for a school/college organization, or simply for the purpose of learning the tech stack and enhancing your portfolio. In either case, this project would be a great way to get started. The aim is to create the world's most lightweight yet feature-rich learning management system. However, this is not possible without your support, so please give it a star ⭐️.
 
@@ -61,7 +61,7 @@ If you would like to contribute, simply begin by implementing one from the list 
 - Clone the repo with
 
 ```bash
-git clone https://github.com/SkyCascade/SkyLearn.git
+git clone https://github.com/SkyCascade/SchoolCortex.git
 ```
 
 - Create and activate a python virtual environment
@@ -101,7 +101,7 @@ I'll create a comprehensive README.md that reflects all the work you've done and
 ## Updated README.md
 
 ````markdown
-# SkyLearn - Learning Management System
+# SchoolCortex - Learning Management System
 
 [![Django Version](https://img.shields.io/badge/Django-4.2.11-green.svg)](https://www.djangoproject.com/)
 [![Python Version](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
@@ -533,7 +533,7 @@ This updated README includes:
 
 Would you like me to also create a `requirements.txt` file with all the exact versions that worked for you? 🚀
 
-Based on the complete project structure and code analysis, here's the **comprehensive list of features** in your SkyLearn Learning Management System:
+Based on the complete project structure and code analysis, here's the **comprehensive list of features** in your SchoolCortex Learning Management System:
 
 ## 📚 **Core Academic Management Features**
 

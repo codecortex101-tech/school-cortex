@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans 'Delete Session' %} | {% trans 'Attendance' %}{% endblock title %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'attendance:sessions' %}">{% trans 'Attendance Sessions' %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans 'Delete Session' %}</li>
+    </ol>
+</nav>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <h1 class="h4 mb-2">{% trans 'Delete attendance session?' %}</h1>
+        <p class="text-muted mb-4">
+            {{ session.title }} - {{ session.course.title }} - {{ session.date|date:"F d, Y" }}
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn btn-danger">{% trans 'Delete Session' %}</button>
+                <a href="{% url 'attendance:sessions' %}" class="btn btn-light">{% trans 'Cancel' %}</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content %}

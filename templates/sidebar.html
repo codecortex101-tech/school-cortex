@@ -5,7 +5,7 @@
     <div class="sidebar-header">
         <div class="logo-section">
             <a href="/" class="logo-link">
-                <img src="{% static 'img/brand.svg' %}" alt="SkyLearn" class="logo-img">
+                <img src="{% static 'img/brand.svg' %}" alt="SchoolCortex" class="logo-img">
             </a>
             <button class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
                 <i class="fas fa-chevron-left"></i>
@@ -44,6 +44,9 @@
         {% url 'quiz_marking' as qce %} 
         {% url 'user_course_list' as ucl %}
         {% url 'admin_panel' as admin_p %}
+        <!-- Attendance URLs -->
+        {% url 'attendance:sessions' as attendance_sessions %}
+        {% url 'attendance:student_attendance' as student_attendance %}
 
         <ul class="nav-menu">
             <!-- Main Section -->
@@ -131,6 +134,29 @@
                 <a href="{% url 'add_score' %}" class="nav-link">
                     <i class="fas fa-table"></i>
                     <span>{% trans 'Manage Scores' %}</span>
+                </a>
+            </li>
+            {% endif %}
+
+            <!-- Attendance Section -->
+            <li class="nav-divider">
+                <span class="nav-label">{% trans 'Attendance' %}</span>
+            </li>
+
+            {% if request.user.is_lecturer %}
+            <li class="nav-item {% if request.path == attendance_sessions %}active{% endif %}">
+                <a href="{% url 'attendance:sessions' %}" class="nav-link">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>{% trans 'Attendance Sessions' %}</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user.is_student %}
+            <li class="nav-item {% if request.path == student_attendance %}active{% endif %}">
+                <a href="{% url 'attendance:student_attendance' %}" class="nav-link">
+                    <i class="fas fa-chart-line"></i>
+                    <span>{% trans 'My Attendance' %}</span>
                 </a>
             </li>
             {% endif %}
@@ -250,7 +276,7 @@
         <!-- Footer Info -->
         <div class="footer-info">
             <p class="copyright">
-                <i class="far fa-copyright"></i> {% now "Y" %} SkyLearn
+                <i class="far fa-copyright"></i> {% now "Y" %} SchoolCortex
             </p>
             <div class="footer-links">
                 <a href="#">{% trans 'Privacy' %}</a>
@@ -260,7 +286,7 @@
         </div>
 
         <!-- Star Button -->
-        <a href="https://github.com/SkyCascade/SkyLearn" class="star-btn" target="_blank" rel="noopener noreferrer">
+        <a href="https://github.com/SkyCascade/SchoolCortex" class="star-btn" target="_blank" rel="noopener noreferrer">
             <i class="fas fa-star"></i>
             <span>{% trans 'Star on GitHub' %}</span>
         </a>

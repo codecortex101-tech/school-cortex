@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans 'My Attendance' %} | {% trans 'SchoolCortex LMS' %}{% endblock title %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans 'My Attendance' %}</li>
+    </ol>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="header-text">
+            <h1 class="header-title">{% trans 'My Attendance' %}</h1>
+            <p class="header-subtitle">{% trans 'Track your attendance across all courses' %}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Filter -->
+<div class="filter-bar">
+    <select id="courseFilter" class="filter-select">
+        <option value="">{% trans 'All Courses' %}</option>
+        {% for course in courses %}
+        <option value="{{ course.id }}" {% if selected_course == course.id|stringformat:"s" %}selected{% endif %}>
+            {{ course.title }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+
+<!-- Attendance Summary Cards -->
+<div class="summary-cards" id="summaryCards">
+    <div class="summary-card">
+        <div class="card-icon" style="background: var(--success-bg); color: var(--success);">
+            <i class="fas fa-book-open"></i>
+        </div>
+        <div class="card-value">{{ summary_totals.courses }}</div>
+        <div class="card-label">{% trans 'Courses' %}</div>
+    </div>
+    <div class="summary-card">
+        <div class="card-icon" style="background: var(--success-bg); color: var(--success);">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="card-value">{{ summary_totals.total_sessions }}</div>
+        <div class="card-label">{% trans 'Total Sessions' %}</div>
+    </div>
+    <div class="summary-card">
+        <div class="card-icon" style="background: var(--success-bg); color: var(--success);">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="card-value">{{ summary_totals.present_count }}</div>
+        <div class="card-label">{% trans 'Present' %}</div>
+    </div>
+    <div class="summary-card">
+        <div class="card-icon" style="background: var(--error-bg); color: var(--error);">
+            <i class="fas fa-times-circle"></i>
+        </div>
+        <div class="card-value">{{ summary_totals.absent_count }}</div>
+        <div class="card-label">{% trans 'Absent' %}</div>
+    </div>
+    <div class="summary-card">
+        <div class="card-icon" style="background: var(--primary-bg); color: var(--primary);">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="card-value">{{ summary_totals.attendance_percentage }}%</div>
+        <div class="card-label">{% trans 'Overall Attendance' %}</div>
+    </div>
+</div>
+
+<!-- Attendance Table -->
+<div class="attendance-container">
+    <div class="attendance-table-wrapper">
+        <table class="attendance-table">
+            <thead>
+                <tr>
+                    <th>{% trans 'Course' %}</th>
+                    <th>{% trans 'Total Sessions' %}</th>
+                    <th>{% trans 'Present' %}</th>
+                    <th>{% trans 'Absent' %}</th>
+                    <th>{% trans 'Late' %}</th>
+                    <th>{% trans 'Excused' %}</th>
+                    <th>{% trans 'Attendance %' %}</th>
+                    <th>{% trans 'Status' %}</th>
+                </tr>
+            </thead>
+            <tbody id="attendanceTableBody">
+                {% for summary in summaries %}
+                <tr>
+                    <td data-label="{% trans 'Course' %}">
+                        <strong>{{ summary.course.title }}</strong><br>
+                        <small class="text-muted">{{ summary.course.code }}</small>
+                    </td>
+                    <td data-label="{% trans 'Total Sessions' %}">{{ summary.total_sessions }}</td>
+                    <td data-label="{% trans 'Present' %}" class="text-success">{{ summary.present_count }}</td>
+                    <td data-label="{% trans 'Absent' %}" class="text-danger">{{ summary.absent_count }}</td>
+                    <td data-label="{% trans 'Late' %}" class="text-warning">{{ summary.late_count }}</td>
+                    <td data-label="{% trans 'Excused' %}" class="text-info">{{ summary.excused_count }}</td>
+                    <td data-label="{% trans 'Attendance %' %}">
+                        <div class="attendance-percentage">
+                            <span class="percentage-value">{{ summary.attendance_percentage }}%</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: {{ summary.attendance_percentage }}%;"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="{% trans 'Status' %}">
+                        {% if summary.attendance_percentage >= 75 %}
+                        <span class="status-badge good">
+                            <i class="fas fa-check-circle"></i> {% trans 'Good' %}
+                        </span>
+                        {% elif summary.attendance_percentage >= 60 %}
+                        <span class="status-badge warning">
+                            <i class="fas fa-exclamation-triangle"></i> {% trans 'Warning' %}
+                        </span>
+                        {% else %}
+                        <span class="status-badge critical">
+                            <i class="fas fa-times-circle"></i> {% trans 'Critical' %}
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-5">
+                        <i class="fas fa-chart-line fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">{% trans 'No attendance records found.' %}</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.header-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.8);
+}
+
+/* Filter Bar */
+.filter-bar {
+    margin-bottom: 1.5rem;
+}
+
+.filter-select {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    background: white;
+    cursor: pointer;
+    min-width: 200px;
+}
+
+[data-theme="dark"] .filter-select {
+    background: var(--gray-800);
+    border-color: var(--gray-600);
+    color: var(--gray-200);
+}
+
+/* Summary Cards */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-card {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    padding: 1rem;
+    text-align: center;
+    border: 1px solid var(--gray-200);
+}
+
+.summary-card .card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.5rem;
+}
+
+.summary-card .card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.summary-card .card-label {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+}
+
+/* Attendance Container */
+.attendance-container {
+    background: var(--card-bg, white);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+}
+
+.attendance-table-wrapper {
+    overflow-x: auto;
+}
+
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.attendance-table thead th {
+    padding: 1rem;
+    background: var(--gray-50);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-600);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.attendance-table tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: middle;
+}
+
+.attendance-table tbody tr:hover {
+    background: var(--gray-50);
+}
+
+/* Attendance Percentage */
+.attendance-percentage {
+    min-width: 100px;
+}
+
+.percentage-value {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--gray-200);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.progress-fill[style*="width: 75%"], .progress-fill[style*="width: 100%"] {
+    background: var(--success);
+}
+.progress-fill[style*="width: 60%"] {
+    background: var(--warning);
+}
+.progress-fill[style*="width: 0%"] {
+    background: var(--error);
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.status-badge.good {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.status-badge.warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.status-badge.critical {
+    background: var(--error-bg);
+    color: var(--error);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .attendance-table thead {
+        display: none;
+    }
+    
+    .attendance-table tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+    }
+    
+    .attendance-table tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .attendance-table tbody td:last-child {
+        border-bottom: none;
+    }
+    
+    .attendance-table tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: 0.7rem;
+        color: var(--gray-600);
+        min-width: 100px;
+    }
+    
+    .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+
+<script>
+// Filter functionality
+document.getElementById('courseFilter')?.addEventListener('change', function() {
+    const courseId = this.value;
+    let url = window.location.pathname;
+    if (courseId) {
+        url += '?course=' + courseId;
+    }
+    window.location.href = url;
+});
+
+</script>
+
+{% endblock content %}

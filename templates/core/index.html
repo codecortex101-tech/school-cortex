@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block title %}{% trans 'Home' %} | {% trans 'SkyLearn LMS' %}{% endblock title %}
+{% block title %}{% trans 'Home' %} | {% trans 'SchoolCortex LMS' %}{% endblock title %}
 
 {% block content %}
 
@@ -18,7 +18,7 @@
                             <i class="fas fa-graduation-cap"></i> {% trans 'Next-Gen Learning Platform' %}
                         </span>
                         <h1 class="hero-title">
-                            {% trans 'Transform Your Learning Experience with' %} <span class="text-gradient">SkyLearn</span>
+                            {% trans 'Transform Your Learning Experience with' %} <span class="text-gradient">SchoolCortex</span>
                         </h1>
                         <p class="hero-description">
                             {% trans 'A complete Learning Management System for modern education. Manage courses, track progress, conduct quizzes, and more - all in one place.' %}
@@ -254,7 +254,7 @@
     <div class="container">
         <div class="cta-content">
             <h2 class="cta-title">{% trans 'Ready to Start Your Learning Journey?' %}</h2>
-            <p class="cta-description">{% trans 'Join thousands of students already learning on SkyLearn' %}</p>
+            <p class="cta-description">{% trans 'Join thousands of students already learning on SchoolCortex' %}</p>
             {% if not request.user.is_authenticated %}
             <a href="{% url 'register' %}" class="btn-cta">
                 <i class="fas fa-user-plus me-2"></i>{% trans 'Get Started Today' %}
